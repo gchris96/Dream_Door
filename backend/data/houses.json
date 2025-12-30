@@ -9,6 +9,8 @@
       "https://images.unsplash.com/photo-1598928506311-c55ded91a20c"
     ],
     "price": 425000,
+    "address": "123 Maple St, Logan, UT",
+    "description": "Charming single-family home with updated kitchen and fenced backyard.",
     "beds": 3,
     "baths": 2
   },
@@ -22,6 +24,8 @@
       "https://images.unsplash.com/photo-1600573472592-401b489a3cdc"
     ],
     "price": 689000,
+    "address": "456 Oak Dr, Logan, UT",
+    "description": "Spacious two-story with open-concept living, main-floor office, and covered patio.",
     "beds": 4,
     "baths": 3
   },
@@ -35,6 +39,8 @@
       "https://images.unsplash.com/photo-1588854337221-4cf9fa96059c"
     ],
     "price": 315000,
+    "address": "789 Pine Ln, Logan, UT",
+    "description": "Cozy bungalow with hardwood floors, large windows, and a shaded front porch.",
     "beds": 2,
     "baths": 1
   },
@@ -48,6 +54,8 @@
       "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83"
     ],
     "price": 825000,
+    "address": "1010 Aspen Ct, Logan, UT",
+    "description": "Luxury home with chef's kitchen, finished basement, and three-car garage.",
     "beds": 5,
     "baths": 4
   },
@@ -61,6 +69,8 @@
       "https://images.unsplash.com/photo-1570129477492-45c003edd2be"
     ],
     "price": 549000,
+    "address": "222 Birch Ave, Logan, UT",
+    "description": "Well-kept rambler with updated baths, sunny yard, and quiet cul-de-sac.",
     "beds": 3,
     "baths": 2
   }
