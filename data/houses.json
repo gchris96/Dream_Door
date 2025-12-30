@@ -1,0 +1,67 @@
+[
+  {
+    "id": 1,
+    "image_urls": [
+      "https://images.unsplash.com/photo-1572120360610-d971b9b78825",
+      "https://images.unsplash.com/photo-1570129477492-45c003edd2be",
+      "https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6",
+      "https://images.unsplash.com/photo-1568605114967-8130f3a36994",
+      "https://images.unsplash.com/photo-1598928506311-c55ded91a20c"
+    ],
+    "price": 425000,
+    "beds": 3,
+    "baths": 2
+  },
+  {
+    "id": 2,
+    "image_urls": [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c",
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c",
+      "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde",
+      "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b",
+      "https://images.unsplash.com/photo-1600573472592-401b489a3cdc"
+    ],
+    "price": 689000,
+    "beds": 4,
+    "baths": 3
+  },
+  {
+    "id": 3,
+    "image_urls": [
+      "https://images.unsplash.com/photo-1598928506311-c55ded91a20c",
+      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914",
+      "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83",
+      "https://images.unsplash.com/photo-1576941089067-2de3c901e126",
+      "https://images.unsplash.com/photo-1588854337221-4cf9fa96059c"
+    ],
+    "price": 315000,
+    "beds": 2,
+    "baths": 1
+  },
+  {
+    "id": 4,
+    "image_urls": [
+      "https://images.unsplash.com/photo-1568605114967-8130f3a36994",
+      "https://images.unsplash.com/photo-1593696140826-c58b021acf8b",
+      "https://images.unsplash.com/photo-1576941089067-2de3c901e126",
+      "https://images.unsplash.com/photo-1600585152915-d208bec867a1",
+      "https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83"
+    ],
+    "price": 825000,
+    "beds": 5,
+    "baths": 4
+  },
+  {
+    "id": 5,
+    "image_urls": [
+      "https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6",
+      "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b",
+      "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde",
+      "https://images.unsplash.com/photo-1600573472592-401b489a3cdc",
+      "https://images.unsplash.com/photo-1570129477492-45c003edd2be"
+    ],
+    "price": 549000,
+    "beds": 3,
+    "baths": 2
+  }
+]
