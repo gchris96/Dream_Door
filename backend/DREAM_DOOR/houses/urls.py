@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import list_houses
+from houses.views import HouseDeckView
 
 urlpatterns = [
-    path('houses/', list_houses),
+    path("deck/", HouseDeckView.as_view(), name="house-deck"),
 ]

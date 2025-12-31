@@ -17,11 +17,26 @@ export default function App() {
   const screenWidth = Dimensions.get('window').width;
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/houses/')
-      .then(res => res.json())
-      .then(data => setHouses(data))
-      .catch(err => console.error('API error:', err));
+    const load = async () => {
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/houses/deck/');
+        const data = await res.json();
+        setHouses(data.results);
+      } catch (e) {
+        console.error('API error:', e);
+      }
+    };
+
+    load();
   }, []);
+
+    const getHighResImage = (url) => {
+    if (!url) return null;
+    if (url.includes('rdcpix.com')) {
+      return url.replace(/-m\d+s\.jpg$/, '.jpg');
+    }
+    return url;
+  };
 
   const swipeOffScreen = (direction) => {
     Animated.timing(position, {
@@ -62,6 +77,7 @@ const panResponder = useRef(
 ).current;
 
 
+
   if (!houses.length || index >= houses.length) {
     return (
       <View style={[styles.container, styles.center]}>
@@ -89,20 +105,20 @@ const panResponder = useRef(
         ]}
       >
         <Image
-          source={{ uri: house.image_url}}
+          source={{ uri: getHighResImage(house.primary_photo_url) || 'https://via.placeholder.com/600x400'}}
           style={styles.image}
           contentFit="cover"
         />
 
         <Text style={styles.price}>
-          ${house.price.toLocaleString()}
+          ${house.price ? house.price.toLocaleString() : '—'}
         </Text>
 
         <Text style={styles.address}>
-          {house.address}
+          {house.address_line}, {house.city}, {house.state}
         </Text>
         <Text style={styles.description}>
-          {house.description}
+          {house.beds} bd · {house.baths} ba · {house.sqft} sqft
         </Text>
       </Animated.View>
     </View>

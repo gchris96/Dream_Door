@@ -1,10 +1,17 @@
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from .models import House
-from .serializers import HouseSerializer
+from rest_framework.generics import ListAPIView
+from houses.models import House
+from houses.serializers import HouseSerializer
 
-@api_view(['GET'])
-def list_houses(request):
-    houses = House.objects.all().order_by('id')
-    serializer = HouseSerializer(houses, many=True)
-    return Response(serializer.data)
+
+class HouseDeckView(ListAPIView):
+    serializer_class = HouseSerializer
+
+    def get_queryset(self):
+        qs = House.objects.all().order_by("-list_date")
+
+        # Optional filters (safe defaults)
+        zip_code = self.request.query_params.get("zip")
+        if zip_code:
+            qs = qs.filter(postal_code=zip_code)
+
+        return qs
