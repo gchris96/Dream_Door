@@ -29,7 +29,7 @@ export default function App() {
         x: direction === 'right' ? screenWidth : -screenWidth,
         y: 0,
       },
-      duration: 200,
+      duration: 250,
       useNativeDriver: false,
     }).start(() => {
       position.setValue({ x: 0, y: 0 });
@@ -37,7 +37,8 @@ export default function App() {
     });
   };
 
-  const panResponder = PanResponder.create({
+const panResponder = useRef(
+  PanResponder.create({
     onStartShouldSetPanResponder: () => true,
 
     onPanResponderMove: Animated.event(
@@ -57,12 +58,16 @@ export default function App() {
         }).start();
       }
     },
-  });
+  })
+).current;
+
 
   if (!houses.length || index >= houses.length) {
     return (
-      <View style={styles.container}>
-        <Text>No more houses</Text>
+      <View style={[styles.container, styles.center]}>
+      <Text style={styles.endText}>
+        you've reached the end
+        </Text>
       </View>
     );
   }
@@ -84,7 +89,7 @@ export default function App() {
         ]}
       >
         <Image
-          source="https://picsum.photos/800/600"
+          source={{ uri: house.image_url}}
           style={styles.image}
           contentFit="cover"
         />
@@ -108,7 +113,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    paddingTop: 60,
+    paddingTop: 150,
   },
   card: {
     backgroundColor: '#fff',
@@ -119,7 +124,7 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: 300,
-    borderRadius: 12,
+    borderRadius: 5,
     marginBottom: 20,
     backgroundColor: '#eee',
   },
@@ -139,4 +144,13 @@ const styles = StyleSheet.create({
   textAlign: 'center',
   marginTop: 8,
 },
+center: {
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+endText: {
+  textAlign: 'center',
+  color: '#666',
+  fontSize: 16,
+}
 });
