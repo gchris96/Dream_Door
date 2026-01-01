@@ -23,6 +23,7 @@ export default function App() {
   const [pendingDislikeId, setPendingDislikeId] = useState(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [history, setHistory] = useState([]);
+  const [detailByHouseId, setDetailByHouseId] = useState({});
   const [showLikeBadge, setShowLikeBadge] = useState(false);
   const [likeBadgeId, setLikeBadgeId] = useState(null);
   const [showDislikeBadge, setShowDislikeBadge] = useState(false);
@@ -88,6 +89,20 @@ export default function App() {
       method: 'POST',
     }).catch(() => {});
   }, [pendingDislikeId]);
+
+  useEffect(() => {
+    if (screen !== 'swipe') return;
+    const current = swipeHouses[index];
+    if (!current || detailByHouseId[current.id]) return;
+
+    fetch(`http://127.0.0.1:8000/api/houses/${current.id}/detail/`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (!data) return;
+        setDetailByHouseId(prev => ({ ...prev, [current.id]: data }));
+      })
+      .catch(() => {});
+  }, [screen, swipeHouses, index, detailByHouseId]);
 
   // -------------------------
   // SWIPE LEFT
@@ -222,7 +237,12 @@ export default function App() {
   const panResponder = useMemo(
     () =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => !isAnimating,
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gesture) => {
+          if (isAnimating) return false;
+          const isHorizontal = Math.abs(gesture.dx) > Math.abs(gesture.dy);
+          return isHorizontal && Math.abs(gesture.dx) > 10;
+        },
 
         onPanResponderMove: (_, gesture) => {
           if (!isAnimating) {
@@ -360,9 +380,16 @@ export default function App() {
   }
 
   const house = swipeHouses[index];
+  const detail = detailByHouseId[house.id];
+  const descriptionText = detail?.description?.text;
+  const detailItems = Array.isArray(detail?.details) ? detail.details : [];
+  const beds = detail?.description?.beds ?? house.beds;
+  const baths = detail?.description?.baths ?? house.baths;
+  const yearBuilt = detail?.description?.year_built;
+  const sqft = detail?.description?.sqft ?? house.sqft;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, styles.swipeContainer]}>
       <Pressable
         style={styles.backButton}
         onPress={() => setScreen('home')}
@@ -391,42 +418,78 @@ export default function App() {
           },
         ]}
       >
-        <Image
-          source={{ uri: house.primary_photo_url || 'https://via.placeholder.com/600x400' }}
-          style={styles.image}
-          contentFit="cover"
-        />
-
-        <Text style={styles.price}>
-          ${house.price ? house.price.toLocaleString() : '—'}
-        </Text>
-
-        <Text style={styles.address}>
-          {house.address_line}, {house.city}, {house.state}
-        </Text>
-
-        <Text style={styles.description}>
-          {house.beds} bd · {house.baths} ba · {house.sqft} sqft
-        </Text>
-
-        <Text
-          style={[
-            styles.saveButton,
-            savedIds.has(house.id) && styles.saved,
-          ]}
-          onPress={saveCurrentHouse}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.cardScrollContent}
         >
-          {savedIds.has(house.id) ? 'Saved ✓' : 'Save'}
-        </Text>
-        <Text
-          style={[
-            styles.undoButton,
-            history.length === 0 && styles.undoDisabled,
-          ]}
-          onPress={undoSwipe}
-        >
-          Undo
-        </Text>
+          <Image
+            source={{ uri: house.primary_photo_url || 'https://via.placeholder.com/600x400' }}
+            style={styles.image}
+            contentFit="cover"
+          />
+
+          <Text style={styles.price}>
+            ${house.price ? house.price.toLocaleString() : '—'}
+          </Text>
+
+          <Text style={styles.address}>
+            {house.address_line}, {house.city}, {house.state}
+          </Text>
+
+          <Text style={styles.description}>
+            {house.beds} bd · {house.baths} ba · {house.sqft} sqft
+          </Text>
+
+          <View style={styles.cardActions}>
+            <Text
+              style={[
+                styles.saveButton,
+                savedIds.has(house.id) && styles.saved,
+              ]}
+              onPress={saveCurrentHouse}
+            >
+              {savedIds.has(house.id) ? 'Saved ✓' : 'Save'}
+            </Text>
+            <Text
+              style={[
+                styles.undoButton,
+                history.length === 0 && styles.undoDisabled,
+              ]}
+              onPress={undoSwipe}
+            >
+              Undo
+            </Text>
+          </View>
+
+          <Text style={styles.detailHeader}>Description</Text>
+          <Text style={styles.detailBody}>
+            {descriptionText || 'No description available.'}
+          </Text>
+
+          <Text style={styles.detailHeader}>Details</Text>
+          <Text style={styles.detailBody}>
+            {beds ?? '—'} beds · {baths ?? '—'} baths · {yearBuilt ?? '—'} year built · {sqft ?? '—'} sqft
+          </Text>
+
+          <Text style={styles.detailHeader}>Additional Details</Text>
+          {detailItems.length === 0 ? (
+            <Text style={styles.detailBody}>No additional details available.</Text>
+          ) : (
+            detailItems.map((item, itemIndex) => {
+              const lines = Array.isArray(item?.text) ? item.text : [item?.text].filter(Boolean);
+              return (
+                <View key={`${item?.category || 'detail'}-${itemIndex}`} style={styles.detailItem}>
+                  <Text style={styles.detailSubheader}>{item?.category || 'Details'}</Text>
+                  {lines.map((line, lineIndex) => (
+                    <Text key={`${itemIndex}-${lineIndex}`} style={styles.detailBody}>
+                      {line}
+                    </Text>
+                  ))}
+                </View>
+              );
+            })
+          )}
+        </ScrollView>
       </Animated.View>
     </View>
   );
@@ -437,6 +500,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     paddingTop: 120,
+  },
+  swipeContainer: {
+    paddingTop: 80,
+    paddingBottom: 20,
   },
   homeGraphic: {
     width: 220,
@@ -568,10 +635,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 10,
     elevation: 3,
+    flex: 1,
+  },
+  cardScrollContent: {
+    paddingBottom: 20,
+  },
+  cardActions: {
+    gap: 8,
   },
   image: {
     width: '100%',
-    height: 300,
+    height: 360,
     borderRadius: 30,
     marginBottom: 20,
     backgroundColor: '#eee',
@@ -593,6 +667,27 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginTop: 8,
+  },
+  detailHeader: {
+    marginTop: 18,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  detailSubheader: {
+    marginTop: 12,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  detailBody: {
+    marginTop: 6,
+    fontSize: 14,
+    color: '#4b5563',
+    lineHeight: 20,
+  },
+  detailItem: {
+    marginTop: 4,
   },
   likeBadgeContainer: {
     position: 'absolute',

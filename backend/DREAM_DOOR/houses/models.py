@@ -45,6 +45,19 @@ class House(models.Model):
     def __str__(self):
         price = f"${self.price:,}" if self.price else "$0"
         return f"{self.city}, {self.state} | {price}"
+
+
+class HouseDetail(models.Model):
+    house = models.OneToOneField(
+        House,
+        on_delete=models.CASCADE,
+        related_name="detail",
+    )
+    payload = models.JSONField(default=dict)
+    fetched_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Detail → House {self.house_id}"
     
 class HouseLike(models.Model):
     house = models.ForeignKey(
