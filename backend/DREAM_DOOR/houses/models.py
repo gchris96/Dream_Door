@@ -31,6 +31,8 @@ class House(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -39,6 +41,50 @@ class House(models.Model):
             ),
         ]
 
+
     def __str__(self):
         price = f"${self.price:,}" if self.price else "$0"
         return f"{self.city}, {self.state} | {price}"
+    
+class HouseLike(models.Model):
+    house = models.ForeignKey(
+        House,
+        on_delete=models.CASCADE,
+        related_name="likes",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Like → House {self.house_id}"
+
+
+class HouseDislike(models.Model):
+    house = models.ForeignKey(
+        House,
+        on_delete=models.CASCADE,
+        related_name="dislikes",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Dislike → House {self.house_id}"
+
+
+class HouseSave(models.Model):
+    house = models.ForeignKey(
+        House,
+        on_delete=models.CASCADE,
+        related_name="saves",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["house"],
+                name="unique_house_save",
+            ),
+        ]
+
+    def __str__(self):
+        return f"Saved → House {self.house_id}"
