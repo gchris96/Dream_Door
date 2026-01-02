@@ -56,9 +56,26 @@ class Command(BaseCommand):
 
             updated += 1
             if options.get("dry_run"):
-                continue
-
-            if options.get("dry_run"):
+                changes = []
+                for original, updated_photo in zip(payload, normalized):
+                    if not isinstance(original, dict) or not isinstance(updated_photo, dict):
+                        continue
+                    original_href = original.get("href")
+                    updated_href = updated_photo.get("href")
+                    if original_href and updated_href and original_href != updated_href:
+                        changes.append((original_href, updated_href, updated_photo.get("href_fallback")))
+                if changes:
+                    house_id = item.house_id or "unknown"
+                    external_id = item.house.external_id if item.house_id else "unknown"
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f"HousePhoto id={item.id} house_id={house_id} external_id={external_id}:"
+                        )
+                    )
+                    for original_href, updated_href, fallback_href in changes:
+                        self.stdout.write(f"  {original_href} -> {updated_href}")
+                        if fallback_href:
+                            self.stdout.write(f"    fallback: {fallback_href}")
                 continue
             item.payload = normalized
             item.save(update_fields=["payload"])

@@ -9,10 +9,11 @@ import {
   Pressable,
   Modal,
   FlatList,
+  TextInput,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { PanGestureHandler, State } from 'react-native-gesture-handler';
+import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
 
 export default function App() {
   const [screen, setScreen] = useState('home');
@@ -39,6 +40,14 @@ export default function App() {
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const [photoViewerHouseId, setPhotoViewerHouseId] = useState(null);
   const [photoViewerIndex, setPhotoViewerIndex] = useState(0);
+  const [detailOrigin, setDetailOrigin] = useState('saved');
+  const [filterMin, setFilterMin] = useState(0);
+  const [filterMax, setFilterMax] = useState(10000000);
+  const [filterMinInput, setFilterMinInput] = useState('0');
+  const [filterMaxInput, setFilterMaxInput] = useState('10000000');
+  const [appliedFilterMin, setAppliedFilterMin] = useState(0);
+  const [appliedFilterMax, setAppliedFilterMax] = useState(10000000);
+  const [filterTrackWidth, setFilterTrackWidth] = useState(0);
 
   const position = useRef(new RNAnimated.ValueXY()).current;
   const cardOpacity = useRef(new RNAnimated.Value(1)).current;
@@ -47,11 +56,62 @@ export default function App() {
   const photoViewerTranslate = useRef(new RNAnimated.Value(0)).current;
   const photoViewerOpacity = useRef(new RNAnimated.Value(1)).current;
   const photoListRef = useRef(null);
+  const filterTrackRef = useRef(null);
+  const filterTrackX = useRef(0);
+  const badgeDragX = useRef(new RNAnimated.Value(0)).current;
   const screenWidth = Dimensions.get('window').width;
   const screenHeight = Dimensions.get('window').height;
+  const cardTilt = position.x.interpolate({
+    inputRange: [-screenWidth, 0, screenWidth],
+    outputRange: ['-12deg', '0deg', '12deg'],
+    extrapolate: 'clamp',
+  });
+  const cardLift = position.x.interpolate({
+    inputRange: [-screenWidth, 0, screenWidth],
+    outputRange: [12, 0, 12],
+    extrapolate: 'clamp',
+  });
+  const likeBadgeOpacity = position.x.interpolate({
+    inputRange: [0, screenWidth * 0.25],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+  const dislikeBadgeOpacity = position.x.interpolate({
+    inputRange: [-screenWidth * 0.25, 0],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+  const likeBadgeApproach = badgeDragX.interpolate({
+    inputRange: [0, screenWidth * 0.9, screenWidth],
+    outputRange: [screenWidth * 0.8, 0, screenWidth * 1.1],
+    extrapolate: 'clamp',
+  });
+  const dislikeBadgeApproach = badgeDragX.interpolate({
+    inputRange: [-screenWidth, -screenWidth * 0.9, 0],
+    outputRange: [-screenWidth * 1.1, 0, -screenWidth * 0.8],
+    extrapolate: 'clamp',
+  });
+  const badgeFollow = RNAnimated.subtract(position.x, badgeDragX);
+  const likeBadgeTranslate = RNAnimated.add(likeBadgeApproach, badgeFollow);
+  const dislikeBadgeTranslate = RNAnimated.add(dislikeBadgeApproach, badgeFollow);
+  const filteredHouses = useMemo(() => {
+    return houses.filter((house) => {
+      const price = typeof house.price === 'number' ? house.price : Number(house.price);
+      if (Number.isNaN(price)) return false;
+      return price >= appliedFilterMin && price <= appliedFilterMax;
+    });
+  }, [houses, appliedFilterMin, appliedFilterMax]);
   const swipeHouses = useMemo(
-    () => houses.filter(house => !savedIds.has(house.id) || savedOverrideIds.has(house.id)),
-    [houses, savedIds, savedOverrideIds]
+    () => filteredHouses.filter(house => !savedIds.has(house.id) || savedOverrideIds.has(house.id)),
+    [filteredHouses, savedIds, savedOverrideIds]
+  );
+  const likedHouses = useMemo(
+    () => houses.filter(house => likedIds.has(house.id)),
+    [houses, likedIds]
+  );
+  const dislikedHouses = useMemo(
+    () => houses.filter(house => dislikedIds.has(house.id)),
+    [houses, dislikedIds]
   );
   const savedDetailHouse = useMemo(() => {
     if (!savedDetailId) return null;
@@ -144,18 +204,157 @@ export default function App() {
       .catch(() => {});
   }, [screen, swipeHouses, index, savedDetailHouse, photoByHouseId]);
 
-  const animateCardIn = () => {
-    cardOpacity.setValue(0);
-    RNAnimated.timing(cardOpacity, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
+  const resetPositionNextTick = () => {
+    requestAnimationFrame(() => {
+      badgeDragX.setValue(0);
+      position.setValue({ x: 0, y: 0 });
+    });
   };
+
+  const runToastAnimation = (message, onComplete) => {
+    setToastMessage(message);
+    savedToastOpacity.setValue(0);
+    savedToastTranslate.setValue(20);
+    RNAnimated.sequence([
+      RNAnimated.parallel([
+        RNAnimated.timing(savedToastOpacity, {
+          toValue: 1,
+          duration: 260,
+          useNativeDriver: true,
+        }),
+        RNAnimated.timing(savedToastTranslate, {
+          toValue: 0,
+          duration: 260,
+          useNativeDriver: true,
+        }),
+      ]),
+      RNAnimated.delay(700),
+      RNAnimated.parallel([
+        RNAnimated.timing(savedToastOpacity, {
+          toValue: 0,
+          duration: 260,
+          useNativeDriver: true,
+        }),
+        RNAnimated.timing(savedToastTranslate, {
+          toValue: -10,
+          duration: 260,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start(() => {
+      setToastMessage(null);
+      if (onComplete) {
+        onComplete();
+      }
+    });
+  };
+
+  const PRICE_MIN = 0;
+  const PRICE_MAX = 10000000;
+  const PRICE_STEP = 25000;
+
+  const clampPrice = (value) => Math.min(PRICE_MAX, Math.max(PRICE_MIN, value));
+  const formatPrice = (value) => `$${value.toLocaleString()}`;
+  const getStepForValue = (value) => {
+    if (value > 5000000) return 1000000;
+    if (value >= 1000000) return 250000;
+    return PRICE_STEP;
+  };
+  const snapDirectional = (value, direction) => {
+    const step = getStepForValue(value);
+    if (direction >= 0) {
+      return Math.ceil(value / step) * step;
+    }
+    return Math.floor(value / step) * step;
+  };
+
+  const setMinPrice = (value) => {
+    const next = clampPrice(value);
+    const capped = Math.min(next, filterMax);
+    setFilterMin(capped);
+    setFilterMinInput(String(capped));
+    if (capped > filterMax) {
+      setFilterMax(capped);
+      setFilterMaxInput(String(capped));
+    }
+  };
+
+  const setMaxPrice = (value) => {
+    const next = clampPrice(value);
+    const capped = Math.max(next, filterMin);
+    setFilterMax(capped);
+    setFilterMaxInput(String(capped));
+    if (capped < filterMin) {
+      setFilterMin(capped);
+      setFilterMinInput(String(capped));
+    }
+  };
+
+  const normalizePriceInput = (text) => {
+    const cleaned = text.replace(/[^\d]/g, '');
+    if (!cleaned) return null;
+    const value = Number(cleaned);
+    if (Number.isNaN(value)) return null;
+    return clampPrice(value);
+  };
+
+  const minPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onPanResponderGrant: () => {
+          if (!filterTrackRef.current?.measureInWindow) return;
+          filterTrackRef.current.measureInWindow((x) => {
+            filterTrackX.current = x;
+          });
+        },
+        onPanResponderMove: (_, gesture) => {
+          if (!filterTrackWidth) return;
+          const range = PRICE_MAX - PRICE_MIN;
+          const nextX = Math.min(
+            filterTrackWidth,
+            Math.max(0, gesture.moveX - filterTrackX.current)
+          );
+          const nextValue = PRICE_MIN + (nextX / filterTrackWidth) * range;
+          const snapped = snapDirectional(nextValue, gesture.dx);
+          const capped = Math.min(clampPrice(snapped), filterMax);
+          setFilterMin(capped);
+          setFilterMinInput(String(capped));
+        },
+      }),
+    [filterMin, filterMax, filterTrackWidth]
+  );
+
+  const maxPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onPanResponderGrant: () => {
+          if (!filterTrackRef.current?.measureInWindow) return;
+          filterTrackRef.current.measureInWindow((x) => {
+            filterTrackX.current = x;
+          });
+        },
+        onPanResponderMove: (_, gesture) => {
+          if (!filterTrackWidth) return;
+          const range = PRICE_MAX - PRICE_MIN;
+          const nextX = Math.min(
+            filterTrackWidth,
+            Math.max(0, gesture.moveX - filterTrackX.current)
+          );
+          const nextValue = PRICE_MIN + (nextX / filterTrackWidth) * range;
+          const snapped = snapDirectional(nextValue, gesture.dx);
+          const capped = Math.max(clampPrice(snapped), filterMin);
+          setFilterMax(capped);
+          setFilterMaxInput(String(capped));
+        },
+      }),
+    [filterMin, filterMax, filterTrackWidth]
+  );
 
   useEffect(() => {
     if (screen !== 'swipe') return;
-    animateCardIn();
+    cardOpacity.setValue(1);
   }, [screen, index]);
 
   // -------------------------
@@ -172,8 +371,6 @@ export default function App() {
     if (isDislike) {
       setDislikedIds(prev => new Set(prev).add(house.id));
       setPendingDislikeId(house.id);
-      setDislikeBadgeId(house.id);
-      setShowDislikeBadge(true);
     }
 
     RNAnimated.timing(position, {
@@ -181,11 +378,9 @@ export default function App() {
         x: direction === 'right' ? screenWidth : -screenWidth,
         y: 0,
       },
-      duration: 200,
+      duration: 280,
       useNativeDriver: false,
     }).start(() => {
-      setShowDislikeBadge(false);
-      position.setValue({ x: 0, y: 0 });
       setHistory(prev => [
         ...prev,
         {
@@ -196,6 +391,7 @@ export default function App() {
         },
       ]);
       setIndex(prev => prev + 1);
+      resetPositionNextTick();
       setIsAnimating(false);
     });
   };
@@ -210,17 +406,13 @@ export default function App() {
     setIsAnimating(true);
     setLikedIds(prev => new Set(prev).add(house.id));
     setPendingLikeId(house.id);
-    setLikeBadgeId(house.id);
-    setShowLikeBadge(true);
     const currentIndex = index;
 
     RNAnimated.timing(position, {
       toValue: { x: screenWidth, y: 0 },
-      duration: 220,
+      duration: 280,
       useNativeDriver: false,
     }).start(() => {
-      setShowLikeBadge(false);
-      position.setValue({ x: 0, y: 0 });
       setHistory(prev => [
         ...prev,
         {
@@ -231,6 +423,7 @@ export default function App() {
         },
       ]);
       setIndex(prev => prev + 1);
+      resetPositionNextTick();
       setIsAnimating(false);
     });
   };
@@ -250,37 +443,7 @@ export default function App() {
         method: 'DELETE',
       }).catch(() => {});
       setIsSaving(true);
-      setToastMessage('Unsaved');
-      savedToastOpacity.setValue(0);
-      savedToastTranslate.setValue(20);
-      RNAnimated.sequence([
-        RNAnimated.parallel([
-          RNAnimated.timing(savedToastOpacity, {
-            toValue: 1,
-            duration: 260,
-            useNativeDriver: true,
-          }),
-          RNAnimated.timing(savedToastTranslate, {
-            toValue: 0,
-            duration: 260,
-            useNativeDriver: true,
-          }),
-        ]),
-        RNAnimated.delay(700),
-        RNAnimated.parallel([
-          RNAnimated.timing(savedToastOpacity, {
-            toValue: 0,
-            duration: 260,
-            useNativeDriver: true,
-          }),
-          RNAnimated.timing(savedToastTranslate, {
-            toValue: -10,
-            duration: 260,
-            useNativeDriver: true,
-          }),
-        ]),
-      ]).start(() => {
-        setToastMessage(null);
+      runToastAnimation('Unsaved', () => {
         setSavedIds(prev => {
           const next = new Set(prev);
           next.delete(house.id);
@@ -305,61 +468,57 @@ export default function App() {
         method: 'POST',
       }).catch(() => {});
       setIsSaving(true);
-      setToastMessage('Saved!');
-      savedToastOpacity.setValue(0);
-      savedToastTranslate.setValue(20);
-      RNAnimated.sequence([
-        RNAnimated.parallel([
-          RNAnimated.timing(savedToastOpacity, {
-            toValue: 1,
-            duration: 260,
-            useNativeDriver: true,
-          }),
-          RNAnimated.timing(savedToastTranslate, {
-            toValue: 0,
-            duration: 260,
-            useNativeDriver: true,
-          }),
-        ]),
-        RNAnimated.delay(700),
-        RNAnimated.parallel([
-          RNAnimated.timing(savedToastOpacity, {
-            toValue: 0,
-            duration: 260,
-            useNativeDriver: true,
-          }),
-          RNAnimated.timing(savedToastTranslate, {
-            toValue: -10,
-            duration: 260,
-            useNativeDriver: true,
-          }),
-        ]),
-      ]).start(() => {
-        setToastMessage(null);
-        setSavedOverrideIds(prev => {
-          const next = new Set(prev);
-          next.delete(house.id);
-          return next;
+      if (isSwipeContext && screen === 'swipe') {
+        setIsAnimating(true);
+        runToastAnimation('Saved!', () => {
+          RNAnimated.timing(position, {
+            toValue: { x: screenWidth, y: 0 },
+            duration: 280,
+            useNativeDriver: false,
+          }).start(() => {
+            setSavedOverrideIds(prev => {
+              const next = new Set(prev);
+              next.delete(house.id);
+              return next;
+            });
+            setHistory(prev => [
+              ...prev,
+              {
+                index: currentIndex,
+                houseId: house.id,
+                likedAdded: false,
+                dislikedAdded: false,
+                savedAdded: true,
+              },
+            ]);
+            setIndex(prev => prev + 1);
+            resetPositionNextTick();
+            setIsSaving(false);
+            setIsAnimating(false);
+          });
         });
-        if (isSwipeContext) {
-          setHistory(prev => [
-            ...prev,
-            {
-              index: currentIndex,
-              houseId: house.id,
-              likedAdded: false,
-              dislikedAdded: false,
-              savedAdded: true,
-            },
-          ]);
-          if (screen === 'swipe') {
-            const nextLength = Math.max(0, swipeHouses.length - 1);
-            setIndex(() => Math.min(currentIndex, Math.max(0, nextLength - 1)));
-            animateCardIn();
+      } else {
+        runToastAnimation('Saved!', () => {
+          setSavedOverrideIds(prev => {
+            const next = new Set(prev);
+            next.delete(house.id);
+            return next;
+          });
+          if (isSwipeContext) {
+            setHistory(prev => [
+              ...prev,
+              {
+                index: currentIndex,
+                houseId: house.id,
+                likedAdded: false,
+                dislikedAdded: false,
+                savedAdded: true,
+              },
+            ]);
           }
-        }
-        setIsSaving(false);
-      });
+          setIsSaving(false);
+        });
+      }
     }
   };
 
@@ -403,7 +562,8 @@ export default function App() {
 
         onPanResponderMove: (_, gesture) => {
           if (!isAnimating) {
-            position.setValue({ x: gesture.dx, y: gesture.dy });
+            badgeDragX.setValue(gesture.dx);
+            position.setValue({ x: gesture.dx, y: gesture.dy * 0.1 });
           }
         },
 
@@ -417,6 +577,8 @@ export default function App() {
           } else {
             RNAnimated.spring(position, {
               toValue: { x: 0, y: 0 },
+              friction: 7,
+              tension: 40,
               useNativeDriver: false,
             }).start();
           }
@@ -497,6 +659,17 @@ export default function App() {
     ? (photoByHouseId[photoViewerHouseId] || [])
     : [];
 
+  const getPrimaryPhotoUrl = (house) => {
+    const photos = photoByHouseId[house.id];
+    if (Array.isArray(photos) && photos.length > 0) {
+      const first = photos[0];
+      if (first && typeof first === 'object') {
+        return first.href || first.href_fallback || house.primary_photo_url;
+      }
+    }
+    return house.primary_photo_url;
+  };
+
   const savedDetailResponder = useMemo(
     () =>
       PanResponder.create({
@@ -507,112 +680,326 @@ export default function App() {
         },
         onPanResponderRelease: (_, gesture) => {
           if (Math.abs(gesture.dx) > 120) {
-            setScreen('saved');
+            setScreen(detailOrigin || 'saved');
           }
         },
       }),
-    []
+    [detailOrigin]
   );
 
   if (screen === 'home') {
     return (
-      <View style={[styles.container, styles.center]}>
-        <View style={styles.homeGraphic}>
-          <View style={styles.dreamGlow} />
-          <View style={styles.sparkle} />
-          <View style={[styles.sparkle, styles.sparkleSmall]} />
-          <View style={[styles.sparkle, styles.sparkleTiny]} />
-          <View style={styles.doorFrame}>
-            <View style={styles.doorOpening} />
-            <View style={styles.doorPanelOpen}>
-              <View style={styles.doorKnob} />
+      <GestureHandlerRootView style={styles.root}>
+        <View style={[styles.container, styles.center]}>
+          <View style={styles.homeGraphic}>
+            <View style={styles.dreamGlow} />
+            <View style={styles.sparkle} />
+            <View style={[styles.sparkle, styles.sparkleSmall]} />
+            <View style={[styles.sparkle, styles.sparkleTiny]} />
+            <View style={styles.doorFrame}>
+              <View style={styles.doorOpening} />
+              <View style={styles.doorPanelOpen}>
+                <View style={styles.doorKnob} />
+              </View>
             </View>
           </View>
-        </View>
-        <Text style={styles.homeTitle}>Dream Door</Text>
+          <Text style={styles.homeTitle}>Dream Door</Text>
         <Pressable
-          style={styles.primaryButton}
+          style={[styles.primaryButton, styles.homeButton]}
           onPress={() => {
-            // setIndex(0);
-            // setHistory([]);
-            // position.setValue({ x: 0, y: 0 });
+            setAppliedFilterMin(PRICE_MIN);
+            setAppliedFilterMax(PRICE_MAX);
+            setFilterMin(PRICE_MIN);
+            setFilterMax(PRICE_MAX);
+            setFilterMinInput(String(PRICE_MIN));
+            setFilterMaxInput(String(PRICE_MAX));
             setScreen('swipe');
           }}
         >
-          <Text style={styles.primaryButtonText}>Browse Homes</Text>
+          <Text style={styles.primaryButtonText}>Browse All Homes</Text>
         </Pressable>
         <Pressable
-          style={styles.secondaryButton}
+          style={[styles.secondaryButton, styles.homeButton]}
+          onPress={() => {
+            setScreen('filters');
+          }}
+        >
+          <Text style={styles.secondaryButtonText}>Filter Homes</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.secondaryButton, styles.homeButton]}
           onPress={() => {
             setScreen('saved');
           }}
         >
           <Text style={styles.secondaryButtonText}>View Saved</Text>
         </Pressable>
+        <Pressable
+          style={[styles.secondaryButton, styles.homeButton]}
+          onPress={() => {
+            setScreen('liked');
+          }}
+        >
+          <Text style={styles.secondaryButtonText}>View Liked</Text>
+        </Pressable>
+        <Pressable
+          style={styles.secondaryButton}
+          onPress={() => {
+            setScreen('disliked');
+          }}
+        >
+          <Text style={styles.secondaryButtonText}>View Disliked</Text>
+        </Pressable>
       </View>
+      </GestureHandlerRootView>
+    );
+  }
+
+  if (screen === 'filters') {
+    const trackWidth = filterTrackWidth || 1;
+    const minX = ((filterMin - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * trackWidth;
+    const maxX = ((filterMax - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * trackWidth;
+    const rangeWidth = Math.max(0, maxX - minX);
+    return (
+      <GestureHandlerRootView style={styles.root}>
+        <View style={styles.container}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => setScreen('home')}
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </Pressable>
+          <Text style={styles.sectionTitle}>Filter Homes</Text>
+          <View style={styles.filterCard}>
+            <Text style={styles.filterLabel}>Price Range</Text>
+            <Text style={styles.filterRangeLabel}>
+              {formatPrice(filterMin)} - {filterMax >= PRICE_MAX ? '$10M+' : formatPrice(filterMax)}
+            </Text>
+            <View style={styles.sliderRow}>
+              <Text style={styles.sliderLimit}>{formatPrice(PRICE_MIN)}</Text>
+              <View
+                style={styles.sliderTrackContainer}
+                ref={filterTrackRef}
+                onLayout={(event) => {
+                  setFilterTrackWidth(event.nativeEvent.layout.width);
+                  if (filterTrackRef.current?.measureInWindow) {
+                    filterTrackRef.current.measureInWindow((x) => {
+                      filterTrackX.current = x;
+                    });
+                  }
+                }}
+              >
+                <View style={styles.sliderTrack} />
+                <View style={[styles.sliderRange, { left: minX, width: rangeWidth }]} />
+                <View
+                  style={[styles.sliderThumb, { left: minX - 12 }]}
+                  {...minPanResponder.panHandlers}
+                />
+                <View
+                  style={[styles.sliderThumb, { left: maxX - 12 }]}
+                  {...maxPanResponder.panHandlers}
+                />
+              </View>
+              <Text style={styles.sliderLimit}>$10M+</Text>
+            </View>
+            <View style={styles.filterInputRow}>
+              <View style={styles.filterInputGroup}>
+                <Text style={styles.filterInputLabel}>Min</Text>
+                <TextInput
+                  style={styles.filterInput}
+                  keyboardType="numeric"
+                  value={filterMinInput}
+                  onChangeText={(text) => {
+                    setFilterMinInput(text.replace(/[^\d]/g, ''));
+                  }}
+                  onEndEditing={() => {
+                    const normalized = normalizePriceInput(filterMinInput);
+                    if (normalized === null) {
+                      setFilterMinInput(String(filterMin));
+                      return;
+                    }
+                    setMinPrice(normalized);
+                  }}
+                />
+              </View>
+              <View style={styles.filterInputGroup}>
+                <Text style={styles.filterInputLabel}>Max</Text>
+                <TextInput
+                  style={styles.filterInput}
+                  keyboardType="numeric"
+                  value={filterMaxInput}
+                  onChangeText={(text) => {
+                    setFilterMaxInput(text.replace(/[^\d]/g, ''));
+                  }}
+                  onEndEditing={() => {
+                    const normalized = normalizePriceInput(filterMaxInput);
+                    if (normalized === null) {
+                      setFilterMaxInput(String(filterMax));
+                      return;
+                    }
+                    setMaxPrice(normalized);
+                  }}
+                />
+              </View>
+            </View>
+          </View>
+          <Pressable
+            style={styles.primaryButton}
+            onPress={() => {
+              setAppliedFilterMin(filterMin);
+              setAppliedFilterMax(filterMax);
+              setIndex(0);
+              setHistory([]);
+              position.setValue({ x: 0, y: 0 });
+              setScreen('swipe');
+            }}
+          >
+            <Text style={styles.primaryButtonText}>Apply Filters</Text>
+          </Pressable>
+        </View>
+      </GestureHandlerRootView>
+    );
+  }
+
+  if (screen === 'liked' || screen === 'disliked') {
+    const list = screen === 'liked' ? likedHouses : dislikedHouses;
+    const title = screen === 'liked' ? 'Liked Homes' : 'Disliked Homes';
+    return (
+      <GestureHandlerRootView style={styles.root}>
+        <View style={styles.container}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => setScreen('home')}
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </Pressable>
+          <Text style={styles.sectionTitle}>{title}</Text>
+          {list.length === 0 ? (
+            <View style={[styles.center, styles.savedEmpty]}>
+              <Text style={styles.endText}>no homes yet</Text>
+            </View>
+          ) : (
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {list.map(item => (
+                <Pressable
+                  key={item.id}
+                  style={styles.savedCard}
+                  onPress={() => {
+                    setSavedDetailId(item.id);
+                    setDetailOrigin(screen);
+                    setScreen('saved-detail');
+                  }}
+                >
+                  <Image
+                    source={{ uri: getPrimaryPhotoUrl(item) || 'https://via.placeholder.com/600x400' }}
+                    style={styles.savedImage}
+                    contentFit="cover"
+                  />
+                  <Text style={styles.price}>
+                    ${item.price ? item.price.toLocaleString() : '—'}
+                  </Text>
+                  <Text style={styles.address}>
+                    {item.address_line}, {item.city}, {item.state}
+                  </Text>
+                  <Text style={styles.description}>
+                    {item.beds} bd · {item.baths} ba · {item.sqft} sqft
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      </GestureHandlerRootView>
     );
   }
 
   if (screen === 'saved') {
     return (
-      <View style={styles.container}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => setScreen('home')}
-        >
-          <Text style={styles.backButtonText}>Back</Text>
-        </Pressable>
-        <Text style={styles.sectionTitle}>Saved Homes</Text>
-        {savedHouses.length === 0 ? (
-          <View style={[styles.center, styles.savedEmpty]}>
-            <Text style={styles.endText}>no saved houses yet</Text>
-          </View>
-        ) : (
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {savedHouses.map(item => (
-              <Pressable
-                key={item.id}
-                style={styles.savedCard}
-                onPress={() => {
-                  setSavedDetailId(item.id);
-                  setScreen('saved-detail');
-                }}
-              >
-                <Image
-                  source={{ uri: item.primary_photo_url || 'https://via.placeholder.com/600x400' }}
-                  style={styles.savedImage}
-                  contentFit="cover"
-                />
-                <Text style={styles.price}>
-                  ${item.price ? item.price.toLocaleString() : '—'}
-                </Text>
-                <Text style={styles.address}>
-                  {item.address_line}, {item.city}, {item.state}
-                </Text>
-                <Text style={styles.description}>
-                  {item.beds} bd · {item.baths} ba · {item.sqft} sqft
-                </Text>
+      <GestureHandlerRootView style={styles.root}>
+        <View style={styles.container}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => setScreen('home')}
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </Pressable>
+          <Text style={styles.sectionTitle}>Saved Homes</Text>
+          {toastMessage && (
+            <RNAnimated.View
+              pointerEvents="none"
+              style={[
+                styles.savedToast,
+                {
+                  opacity: savedToastOpacity,
+                  transform: [{ translateY: savedToastTranslate }],
+                },
+              ]}
+            >
+              <Text style={styles.savedToastText}>{toastMessage}</Text>
+            </RNAnimated.View>
+          )}
+          {savedHouses.length === 0 ? (
+            <View style={[styles.center, styles.savedEmpty]}>
+              <Text style={styles.endText}>no saved houses yet</Text>
+            </View>
+          ) : (
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {savedHouses.map(item => (
                 <Pressable
-                  style={styles.removeSavedButton}
+                  key={item.id}
+                  style={styles.savedCard}
                   onPress={() => {
-                    setSavedIds(prev => {
-                      const next = new Set(prev);
-                      next.delete(item.id);
-                      return next;
-                    });
-                    fetch(`http://127.0.0.1:8000/api/houses/${item.id}/unsave/`, {
-                      method: 'DELETE',
-                    }).catch(() => {});
-                    setSavedHouses(prev => prev.filter(house => house.id !== item.id));
+                    setSavedDetailId(item.id);
+                    setDetailOrigin('saved');
+                    setScreen('saved-detail');
                   }}
                 >
-                  <Text style={styles.removeSavedButtonText}>Remove</Text>
+                  <Image
+                    source={{ uri: getPrimaryPhotoUrl(item) || 'https://via.placeholder.com/600x400' }}
+                    style={styles.savedImage}
+                    contentFit="cover"
+                  />
+                  <Text style={styles.price}>
+                    ${item.price ? item.price.toLocaleString() : '—'}
+                  </Text>
+                  <Text style={styles.address}>
+                    {item.address_line}, {item.city}, {item.state}
+                  </Text>
+                  <Text style={styles.description}>
+                    {item.beds} bd · {item.baths} ba · {item.sqft} sqft
+                  </Text>
+                  <Pressable
+                    style={styles.removeSavedButton}
+                    onPress={() => {
+                      if (isSaving) return;
+                      fetch(`http://127.0.0.1:8000/api/houses/${item.id}/unsave/`, {
+                        method: 'DELETE',
+                      }).catch(() => {});
+                      setIsSaving(true);
+                      runToastAnimation('Removed', () => {
+                        setSavedIds(prev => {
+                          const next = new Set(prev);
+                          next.delete(item.id);
+                          return next;
+                        });
+                        setSavedOverrideIds(prev => {
+                          const next = new Set(prev);
+                          next.delete(item.id);
+                          return next;
+                        });
+                        setSavedHouses(prev => prev.filter(house => house.id !== item.id));
+                        setIsSaving(false);
+                      });
+                    }}
+                  >
+                    <Text style={styles.removeSavedButtonText}>Remove</Text>
+                  </Pressable>
                 </Pressable>
-              </Pressable>
-            ))}
-          </ScrollView>
-        )}
-      </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      </GestureHandlerRootView>
     );
   }
 
@@ -622,7 +1009,7 @@ export default function App() {
         <View style={[styles.container, styles.center]}>
           <Pressable
             style={styles.backButton}
-            onPress={() => setScreen('saved')}
+            onPress={() => setScreen(detailOrigin || 'saved')}
           >
             <Text style={styles.backButtonText}>Back</Text>
           </Pressable>
@@ -647,14 +1034,15 @@ export default function App() {
     const homeType = homeTypeRaw ? homeTypeRaw.replace(/_/g, ' ') : null;
 
     return (
-      <View style={[styles.container, styles.swipeContainer]}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => setScreen('saved')}
-        >
-          <Text style={styles.backButtonText}>Back</Text>
-        </Pressable>
-        <View {...savedDetailResponder.panHandlers} style={styles.card}>
+      <GestureHandlerRootView style={styles.root}>
+        <View style={[styles.container, styles.swipeContainer]}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => setScreen(detailOrigin || 'saved')}
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </Pressable>
+          <View {...savedDetailResponder.panHandlers} style={styles.card}>
           {toastMessage && (
             <RNAnimated.View
               pointerEvents="none"
@@ -677,7 +1065,7 @@ export default function App() {
               onPress={() => openPhotoViewer(house.id, 0)}
             >
               <Image
-                source={{ uri: house.primary_photo_url || 'https://via.placeholder.com/600x400' }}
+                source={{ uri: getPrimaryPhotoUrl(house) || 'https://via.placeholder.com/600x400' }}
                 style={styles.image}
                 contentFit="cover"
               />
@@ -797,23 +1185,26 @@ export default function App() {
             </PanGestureHandler>
           </View>
         </Modal>
-      </View>
+        </View>
+      </GestureHandlerRootView>
     );
   }
 
   if (!swipeHouses.length || index >= swipeHouses.length) {
     return (
-      <View style={[styles.container, styles.center]}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => setScreen('home')}
-        >
-          <Text style={styles.backButtonText}>Back</Text>
-        </Pressable>
-        <Text style={styles.endText}>
-          you've reached the end
-        </Text>
-      </View>
+      <GestureHandlerRootView style={styles.root}>
+        <View style={[styles.container, styles.center]}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => setScreen('home')}
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </Pressable>
+          <Text style={styles.endText}>
+            you've reached the end
+          </Text>
+        </View>
+      </GestureHandlerRootView>
     );
   }
 
@@ -847,6 +1238,7 @@ export default function App() {
   const renderHouseScrollContent = (house, meta, options = {}) => {
     const isHouseSaved = savedIds.has(house.id);
     const showActions = options.allowSave || options.showUndo;
+    const primaryPhotoUrl = getPrimaryPhotoUrl(house);
     return (
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -856,7 +1248,7 @@ export default function App() {
           onPress={options.allowImagePress ? () => openPhotoViewer(house.id, 0) : undefined}
         >
           <Image
-            source={{ uri: house.primary_photo_url || 'https://via.placeholder.com/600x400' }}
+            source={{ uri: primaryPhotoUrl || 'https://via.placeholder.com/600x400' }}
             style={styles.image}
             contentFit="cover"
           />
@@ -941,124 +1333,157 @@ export default function App() {
   const nextMeta = nextHouse ? getHouseMeta(nextHouse) : null;
 
   return (
-    <View style={[styles.container, styles.swipeContainer]}>
-      <Pressable
-        style={styles.backButton}
-        onPress={() => setScreen('home')}
-      >
-        <Text style={styles.backButtonText}>Back</Text>
-      </Pressable>
-      {showLikeBadge && likeBadgeId === currentHouse.id && (
-        <View style={styles.likeBadgeContainer}>
-          <Text style={styles.likeBadge}>❤️</Text>
-        </View>
-      )}
-      {showDislikeBadge && dislikeBadgeId === currentHouse.id && (
-        <View style={styles.dislikeBadgeContainer}>
-          <Text style={styles.dislikeBadge}>👎</Text>
-        </View>
-      )}
-      <View style={styles.cardStack}>
-        {nextHouse && nextMeta && (
-          <View style={[styles.card, styles.underCard]} pointerEvents="none">
-            {renderHouseScrollContent(nextHouse, nextMeta, { allowImagePress: false, allowSave: false })}
-          </View>
-        )}
+    <GestureHandlerRootView style={styles.root}>
+      <View style={[styles.container, styles.swipeContainer]}>
+        <Pressable
+          style={styles.backButton}
+          onPress={() => setScreen('home')}
+        >
+          <Text style={styles.backButtonText}>Back</Text>
+        </Pressable>
         <RNAnimated.View
-          {...panResponder.panHandlers}
+          pointerEvents="none"
           style={[
-            styles.card,
+            styles.likeBadgeContainer,
             {
-              opacity: cardOpacity,
+              left: screenWidth / 2,
+              top: screenHeight * 0.45,
+              opacity: likeBadgeOpacity,
               transform: [
-                { translateX: position.x },
-                { translateY: position.y },
+                { translateX: -40 },
+                { translateY: -40 },
+                { translateX: likeBadgeTranslate },
               ],
             },
           ]}
         >
-          {toastMessage && (
-            <RNAnimated.View
-              pointerEvents="none"
-              style={[
-                styles.savedToast,
-                {
-                  opacity: savedToastOpacity,
-                  transform: [{ translateY: savedToastTranslate }],
-                },
-              ]}
-            >
-              <Text style={styles.savedToastText}>{toastMessage}</Text>
-            </RNAnimated.View>
-          )}
-          {renderHouseScrollContent(currentHouse, currentMeta, {
-            allowImagePress: true,
-            allowSave: true,
-            showUndo: true,
-          })}
+          <Text style={styles.likeBadge}>✓</Text>
         </RNAnimated.View>
-      </View>
-      <Modal
-        visible={showPhotoViewer}
-        transparent
-        animationType="none"
-        onRequestClose={closePhotoViewer}
-      >
-        <View style={styles.photoViewerBackdrop}>
-          <PanGestureHandler
-            onGestureEvent={photoGestureEvent}
-            onHandlerStateChange={onPhotoHandlerStateChange}
-            activeOffsetY={[-10, 10]}
-            failOffsetX={[-15, 15]}
+        <RNAnimated.View
+          pointerEvents="none"
+          style={[
+            styles.dislikeBadgeContainer,
+            {
+              left: screenWidth / 2,
+              top: screenHeight * 0.45,
+              opacity: dislikeBadgeOpacity,
+              transform: [
+                { translateX: -40 },
+                { translateY: -40 },
+                { translateX: dislikeBadgeTranslate },
+              ],
+            },
+          ]}
+        >
+          <Text style={styles.dislikeBadge}>✕</Text>
+        </RNAnimated.View>
+        <View style={styles.cardStack}>
+          {nextHouse && nextMeta && (
+            <View style={[styles.card, styles.underCard]} pointerEvents="none">
+              {renderHouseScrollContent(nextHouse, nextMeta, { allowImagePress: false, allowSave: false })}
+            </View>
+          )}
+          <RNAnimated.View
+            {...panResponder.panHandlers}
+            style={[
+              styles.card,
+              {
+                opacity: cardOpacity,
+                transform: [
+                  { translateX: position.x },
+                  { translateY: position.y },
+                  { translateY: cardLift },
+                  { rotate: cardTilt },
+                ],
+              },
+            ]}
           >
-            <RNAnimated.View
-              style={[
-                styles.photoViewerDragLayer,
-                {
-                  transform: [{ translateY: photoViewerTranslate }],
-                  opacity: photoViewerOpacity,
-                },
-              ]}
-            >
-              <Pressable style={styles.photoViewerBack} onPress={closePhotoViewer}>
-                <Text style={styles.photoViewerBackText}>Back</Text>
-              </Pressable>
-              <FlatList
-                ref={photoListRef}
-                data={currentPhotoList}
-                keyExtractor={(item, idx) => `${photoViewerHouseId || 'house'}-${idx}`}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onMomentumScrollEnd={(event) => {
-                  const nextIndex = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
-                  setPhotoViewerIndex(nextIndex);
-                }}
-                directionalLockEnabled
-                renderItem={({ item }) => (
-                  <View
-                    style={[styles.photoViewerSlide, { width: screenWidth }]}
-                  >
-                    <Image
-                      source={{ uri: item?.href || 'https://via.placeholder.com/600x400' }}
-                      style={styles.photoViewerImage}
-                      contentFit="contain"
-                    />
-                  </View>
-                )}
-              />
-              <Text style={styles.photoViewerCounter}>
-                {currentPhotoList.length ? `${photoViewerIndex + 1}/${currentPhotoList.length}` : '0/0'}
-              </Text>
-            </RNAnimated.View>
-          </PanGestureHandler>
+            {toastMessage && (
+              <RNAnimated.View
+                pointerEvents="none"
+                style={[
+                  styles.savedToast,
+                  {
+                    opacity: savedToastOpacity,
+                    transform: [{ translateY: savedToastTranslate }],
+                  },
+                ]}
+              >
+                <Text style={styles.savedToastText}>{toastMessage}</Text>
+              </RNAnimated.View>
+            )}
+            {renderHouseScrollContent(currentHouse, currentMeta, {
+              allowImagePress: true,
+              allowSave: true,
+              showUndo: true,
+            })}
+          </RNAnimated.View>
         </View>
-      </Modal>
-    </View>
+        <Modal
+          visible={showPhotoViewer}
+          transparent
+          animationType="none"
+          onRequestClose={closePhotoViewer}
+        >
+          <View style={styles.photoViewerBackdrop}>
+            <PanGestureHandler
+              onGestureEvent={photoGestureEvent}
+              onHandlerStateChange={onPhotoHandlerStateChange}
+              activeOffsetY={[-10, 10]}
+              failOffsetX={[-15, 15]}
+            >
+              <RNAnimated.View
+                style={[
+                  styles.photoViewerDragLayer,
+                  {
+                    transform: [{ translateY: photoViewerTranslate }],
+                    opacity: photoViewerOpacity,
+                  },
+                ]}
+              >
+                <Pressable style={styles.photoViewerBack} onPress={closePhotoViewer}>
+                  <Text style={styles.photoViewerBackText}>Back</Text>
+                </Pressable>
+                <FlatList
+                  ref={photoListRef}
+                  data={currentPhotoList}
+                  keyExtractor={(item, idx) => `${photoViewerHouseId || 'house'}-${idx}`}
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  onMomentumScrollEnd={(event) => {
+                    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
+                    setPhotoViewerIndex(nextIndex);
+                  }}
+                  directionalLockEnabled
+                  renderItem={({ item }) => (
+                    <View
+                      style={[styles.photoViewerSlide, { width: screenWidth }]}
+                    >
+                      <Image
+                        source={{ uri: item?.href || 'https://via.placeholder.com/600x400' }}
+                        style={styles.photoViewerImage}
+                        contentFit="contain"
+                      />
+                    </View>
+                  )}
+                />
+                <Text style={styles.photoViewerCounter}>
+                  {currentPhotoList.length ? `${photoViewerIndex + 1}/${currentPhotoList.length}` : '0/0'}
+                </Text>
+              </RNAnimated.View>
+            </PanGestureHandler>
+          </View>
+        </Modal>
+      </View>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     padding: 20,
@@ -1156,7 +1581,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     backgroundColor: '#111827',
-    marginBottom: 12,
   },
   primaryButtonText: {
     textAlign: 'center',
@@ -1169,6 +1593,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     backgroundColor: '#e5e7eb',
+  },
+  homeButton: {
+    marginBottom: 12,
   },
   secondaryButtonText: {
     textAlign: 'center',
@@ -1193,6 +1620,80 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     marginBottom: 12,
+  },
+  filterCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+  },
+  filterLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  filterRangeLabel: {
+    marginTop: 6,
+    fontSize: 14,
+    color: '#4b5563',
+  },
+  sliderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  sliderLimit: {
+    width: 60,
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  sliderTrackContainer: {
+    flex: 1,
+    height: 32,
+    justifyContent: 'center',
+  },
+  sliderTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#e5e7eb',
+  },
+  sliderRange: {
+    position: 'absolute',
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#111827',
+  },
+  sliderThumb: {
+    position: 'absolute',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#111827',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterInputRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
+  },
+  filterInputGroup: {
+    flex: 1,
+  },
+  filterInputLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 6,
+  },
+  filterInput: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+    fontSize: 14,
+    color: '#111827',
   },
   card: {
     backgroundColor: '#d7d2ceff',
@@ -1340,9 +1841,6 @@ const styles = StyleSheet.create({
   },
   likeBadgeContainer: {
     position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -40 }, { translateY: -40 }],
     zIndex: 20,
   },
   likeBadge: {
@@ -1350,9 +1848,6 @@ const styles = StyleSheet.create({
   },
   dislikeBadgeContainer: {
     position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -40 }, { translateY: -40 }],
     zIndex: 20,
   },
   dislikeBadge: {
