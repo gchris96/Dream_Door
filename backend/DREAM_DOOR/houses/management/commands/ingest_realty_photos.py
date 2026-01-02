@@ -6,23 +6,34 @@ from urllib.request import Request, urlopen
 
 from django.core.management.base import BaseCommand, CommandError
 
-from houses.models import House, HouseDetail, HouseImportError
+from houses.models import House, HouseImportError, HousePhoto
 
 
 API_HOST = "realty-in-us.p.rapidapi.com"
-DETAIL_ENDPOINT = "https://realty-in-us.p.rapidapi.com/properties/v3/detail"
+PHOTOS_ENDPOINT = "https://realty-in-us.p.rapidapi.com/properties/v3/get-photos"
 
 
-def _extract_detail(payload):
-    if isinstance(payload, dict):
-        data = payload.get("data")
-        if isinstance(data, dict) and "home" in data:
-            return data.get("home") or {}
-    return payload
+def _extract_photos(payload):
+    if not isinstance(payload, dict):
+        return []
+    data = payload.get("data")
+    if not isinstance(data, dict):
+        return []
+    home_search = data.get("home_search")
+    if not isinstance(home_search, dict):
+        return []
+    results = home_search.get("results")
+    if not isinstance(results, list) or not results:
+        return []
+    first = results[0]
+    if not isinstance(first, dict):
+        return []
+    photos = first.get("photos")
+    return photos if isinstance(photos, list) else []
 
 
 class Command(BaseCommand):
-    help = "Fetch property details from Realty in US and store in HouseDetail."
+    help = "Fetch property photos from Realty in US and store in HousePhoto."
 
     def add_arguments(self, parser):
         parser.add_argument("--house-id", type=int)
@@ -41,7 +52,7 @@ class Command(BaseCommand):
 
         houses = list(qs)
         if not houses:
-            self.stdout.write(self.style.WARNING("No houses found for detail fetch."))
+            self.stdout.write(self.style.WARNING("No houses found for photo fetch."))
             return
 
         headers = {
@@ -58,7 +69,7 @@ class Command(BaseCommand):
             if not house.external_id:
                 continue
             query = urlencode({"property_id": house.external_id})
-            url = f"{DETAIL_ENDPOINT}?{query}"
+            url = f"{PHOTOS_ENDPOINT}?{query}"
             request = Request(url, headers=headers, method="GET")
 
             try:
@@ -71,7 +82,7 @@ class Command(BaseCommand):
                     HouseImportError.objects.create(
                         house=remaining_house,
                         external_id=remaining_house.external_id or "",
-                        import_type="details",
+                        import_type="photos",
                         error_message=error_message,
                     )
                 error_count += len(remaining)
@@ -91,7 +102,7 @@ class Command(BaseCommand):
                     HouseImportError.objects.create(
                         house=remaining_house,
                         external_id=remaining_house.external_id or "",
-                        import_type="details",
+                        import_type="photos",
                         error_message=error_message,
                     )
                 error_count += len(remaining)
@@ -114,7 +125,7 @@ class Command(BaseCommand):
                     HouseImportError.objects.create(
                         house=remaining_house,
                         external_id=remaining_house.external_id or "",
-                        import_type="details",
+                        import_type="photos",
                         error_message=error_message,
                     )
                 error_count += len(remaining)
@@ -128,23 +139,23 @@ class Command(BaseCommand):
                 aborted = True
                 break
 
-            detail_payload = _extract_detail(payload)
-            _, created = HouseDetail.objects.update_or_create(
+            photos_payload = _extract_photos(payload)
+            _, created = HousePhoto.objects.update_or_create(
                 house=house,
-                defaults={"payload": detail_payload or {}},
+                defaults={"payload": photos_payload or []},
             )
             if created:
                 created_count += 1
             else:
                 updated_count += 1
-            self.stdout.write(f"successfully imported details for property_id: {house.external_id}")
+            self.stdout.write(f"successfully imported photos for property_id: {house.external_id}")
 
         if aborted:
             return
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Fetched detail for {created_count + updated_count} houses "
+                f"Fetched photos for {created_count + updated_count} houses "
                 f"(created={created_count}, updated={updated_count}, errors={error_count})."
             )
         )

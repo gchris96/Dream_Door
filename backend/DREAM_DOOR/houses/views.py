@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-from houses.models import House, HouseDetail, HouseDislike, HouseLike, HouseSave
+from houses.models import House, HouseDetail, HouseDislike, HouseLike, HousePhoto, HouseSave
 from houses.serializers import HouseSerializer
 
 
@@ -110,3 +110,24 @@ def house_detail(request, house_id):
         )
 
     return Response(detail.payload, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def house_photos(request, house_id):
+    try:
+        house = House.objects.get(id=house_id)
+    except House.DoesNotExist:
+        return Response(
+            {"error": "House not found"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    try:
+        photos = HousePhoto.objects.get(house=house)
+    except HousePhoto.DoesNotExist:
+        return Response(
+            {"error": "House photos not available"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    return Response(photos.payload, status=status.HTTP_200_OK)

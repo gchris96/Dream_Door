@@ -4,6 +4,7 @@ from houses.views import (
     SavedHouseListView,
     dislike_house,
     house_detail,
+    house_photos,
     like_house,
     save_house,
     unsave_house,
@@ -17,4 +18,5 @@ urlpatterns = [
     path("houses/<int:house_id>/save/", save_house, name="house-save"),
     path("houses/<int:house_id>/unsave/", unsave_house, name="house-unsave"),
     path("houses/<int:house_id>/detail/", house_detail, name="house-detail"),
+    path("houses/<int:house_id>/photos/", house_photos, name="house-photos"),
 ]

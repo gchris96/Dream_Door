@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 
-from houses.models import House
+from houses.models import House, HouseImportError
 
 
 STATUS_FILTERS = ["for_sale", "ready_to_build"]
@@ -180,9 +180,9 @@ class Command(BaseCommand):
         parser.add_argument("--offset", type=int, default=0)
 
     def handle(self, *args, **options):
-        api_key = os.environ.get("REALTY_RAPIDAPI_KEY") or os.environ.get("RAPIDAPI_KEY")
+        api_key = os.environ.get("REALTY_RAPIDAPI_KEY")
         if not api_key:
-            raise CommandError("Missing REALTY_RAPIDAPI_KEY or RAPIDAPI_KEY environment variable.")
+            raise CommandError("Missing REALTY_RAPIDAPI_KEY environment variable.")
 
         payload = {
             "limit": options["limit"],
@@ -208,14 +208,44 @@ class Command(BaseCommand):
             with urlopen(request, timeout=30) as response:
                 raw_body = response.read().decode("utf-8")
         except HTTPError as exc:
-            raise CommandError(f"Realty API error {exc.code}: {exc.read().decode('utf-8')}") from exc
+            error_message = f"Realty API error {exc.code}: {exc.read().decode('utf-8')}"
+            HouseImportError.objects.create(
+                import_type="list",
+                error_message=error_message,
+            )
+            self.stderr.write(
+                self.style.WARNING(
+                    error_message
+                )
+            )
+            return
         except URLError as exc:
-            raise CommandError(f"Network error: {exc}") from exc
+            error_message = f"Network error: {exc}"
+            HouseImportError.objects.create(
+                import_type="list",
+                error_message=error_message,
+            )
+            self.stderr.write(self.style.WARNING(error_message))
+            return
+        except Exception as exc:
+            error_message = f"Unexpected error: {exc}"
+            HouseImportError.objects.create(
+                import_type="list",
+                error_message=error_message,
+            )
+            self.stderr.write(self.style.WARNING(error_message))
+            return
 
         try:
             payload = json.loads(raw_body)
         except json.JSONDecodeError as exc:
-            raise CommandError(f"Invalid JSON response: {exc}") from exc
+            error_message = f"Invalid JSON response: {exc}"
+            HouseImportError.objects.create(
+                import_type="list",
+                error_message=error_message,
+            )
+            self.stderr.write(self.style.WARNING(error_message))
+            return
 
         listings = _extract_listings(payload)
         if not listings:
@@ -244,6 +274,7 @@ class Command(BaseCommand):
                 created_count += 1
             else:
                 updated_count += 1
+            self.stdout.write(f"successfully imported ids for property_id: {external_id}")
 
         if created_count == 0 and updated_count == 0:
             self.stdout.write(self.style.WARNING("No records were created or updated."))

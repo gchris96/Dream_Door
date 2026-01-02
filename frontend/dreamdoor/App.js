@@ -18,23 +18,38 @@ export default function App() {
   const [likedIds, setLikedIds] = useState(new Set());
   const [dislikedIds, setDislikedIds] = useState(new Set());
   const [savedIds, setSavedIds] = useState(new Set());
+  const [savedOverrideIds, setSavedOverrideIds] = useState(new Set());
   const [savedHouses, setSavedHouses] = useState([]);
+  const [savedDetailId, setSavedDetailId] = useState(null);
   const [pendingLikeId, setPendingLikeId] = useState(null);
   const [pendingDislikeId, setPendingDislikeId] = useState(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [history, setHistory] = useState([]);
   const [detailByHouseId, setDetailByHouseId] = useState({});
   const [showLikeBadge, setShowLikeBadge] = useState(false);
   const [likeBadgeId, setLikeBadgeId] = useState(null);
   const [showDislikeBadge, setShowDislikeBadge] = useState(false);
   const [dislikeBadgeId, setDislikeBadgeId] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
 
   const position = useRef(new Animated.ValueXY()).current;
+  const cardOpacity = useRef(new Animated.Value(1)).current;
+  const savedToastOpacity = useRef(new Animated.Value(0)).current;
+  const savedToastTranslate = useRef(new Animated.Value(20)).current;
   const screenWidth = Dimensions.get('window').width;
   const swipeHouses = useMemo(
-    () => houses.filter(house => !savedIds.has(house.id)),
-    [houses, savedIds]
+    () => houses.filter(house => !savedIds.has(house.id) || savedOverrideIds.has(house.id)),
+    [houses, savedIds, savedOverrideIds]
   );
+  const savedDetailHouse = useMemo(() => {
+    if (!savedDetailId) return null;
+    return (
+      savedHouses.find(item => item.id === savedDetailId) ||
+      houses.find(item => item.id === savedDetailId) ||
+      null
+    );
+  }, [savedDetailId, savedHouses, houses]);
 
   // -------------------------
   // LOAD HOUSES
@@ -91,8 +106,8 @@ export default function App() {
   }, [pendingDislikeId]);
 
   useEffect(() => {
-    if (screen !== 'swipe') return;
-    const current = swipeHouses[index];
+    if (screen !== 'swipe' && screen !== 'saved-detail') return;
+    const current = screen === 'swipe' ? swipeHouses[index] : savedDetailHouse;
     if (!current || detailByHouseId[current.id]) return;
 
     fetch(`http://127.0.0.1:8000/api/houses/${current.id}/detail/`)
@@ -102,7 +117,21 @@ export default function App() {
         setDetailByHouseId(prev => ({ ...prev, [current.id]: data }));
       })
       .catch(() => {});
-  }, [screen, swipeHouses, index, detailByHouseId]);
+  }, [screen, swipeHouses, index, savedDetailHouse, detailByHouseId]);
+
+  const animateCardIn = () => {
+    cardOpacity.setValue(0);
+    Animated.timing(cardOpacity, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  useEffect(() => {
+    if (screen !== 'swipe') return;
+    animateCardIn();
+  }, [screen, index]);
 
   // -------------------------
   // SWIPE LEFT
@@ -184,28 +213,128 @@ export default function App() {
   // -------------------------
   // 💾 SAVE (BUTTON)
   // -------------------------
-  const saveCurrentHouse = () => {
-    const house = swipeHouses[index];
-    if (!house) return;
+  const saveCurrentHouse = (overrideHouse) => {
+    const house = overrideHouse || swipeHouses[index];
+    if (!house || isSaving) return;
 
+    const currentIndex = index;
+    const isSwipeContext = !overrideHouse;
     const isSaved = savedIds.has(house.id);
     if (isSaved) {
-      setSavedIds(prev => {
-        const next = new Set(prev);
-        next.delete(house.id);
-        return next;
-      });
       fetch(`http://127.0.0.1:8000/api/houses/${house.id}/unsave/`, {
         method: 'DELETE',
       }).catch(() => {});
+      setIsSaving(true);
+      setToastMessage('Unsaved');
+      savedToastOpacity.setValue(0);
+      savedToastTranslate.setValue(20);
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(savedToastOpacity, {
+            toValue: 1,
+            duration: 260,
+            useNativeDriver: true,
+          }),
+          Animated.timing(savedToastTranslate, {
+            toValue: 0,
+            duration: 260,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.delay(700),
+        Animated.parallel([
+          Animated.timing(savedToastOpacity, {
+            toValue: 0,
+            duration: 260,
+            useNativeDriver: true,
+          }),
+          Animated.timing(savedToastTranslate, {
+            toValue: -10,
+            duration: 260,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]).start(() => {
+        setToastMessage(null);
+        setSavedIds(prev => {
+          const next = new Set(prev);
+          next.delete(house.id);
+          return next;
+        });
+        setSavedOverrideIds(prev => {
+          const next = new Set(prev);
+          next.delete(house.id);
+          return next;
+        });
+        if (!isSwipeContext || screen === 'saved' || screen === 'saved-detail') {
+          setSavedHouses(prev => prev.filter(item => item.id !== house.id));
+        }
+        setIsSaving(false);
+      });
     } else {
       setSavedIds(prev => new Set(prev).add(house.id));
+      if (isSwipeContext) {
+        setSavedOverrideIds(prev => new Set(prev).add(house.id));
+      }
       fetch(`http://127.0.0.1:8000/api/houses/${house.id}/save/`, {
         method: 'POST',
       }).catch(() => {});
-      if (screen === 'swipe') {
-        setIndex(prev => Math.min(prev, Math.max(0, swipeHouses.length - 2)));
-      }
+      setIsSaving(true);
+      setToastMessage('Saved!');
+      savedToastOpacity.setValue(0);
+      savedToastTranslate.setValue(20);
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(savedToastOpacity, {
+            toValue: 1,
+            duration: 260,
+            useNativeDriver: true,
+          }),
+          Animated.timing(savedToastTranslate, {
+            toValue: 0,
+            duration: 260,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.delay(700),
+        Animated.parallel([
+          Animated.timing(savedToastOpacity, {
+            toValue: 0,
+            duration: 260,
+            useNativeDriver: true,
+          }),
+          Animated.timing(savedToastTranslate, {
+            toValue: -10,
+            duration: 260,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]).start(() => {
+        setToastMessage(null);
+        setSavedOverrideIds(prev => {
+          const next = new Set(prev);
+          next.delete(house.id);
+          return next;
+        });
+        if (isSwipeContext) {
+          setHistory(prev => [
+            ...prev,
+            {
+              index: currentIndex,
+              houseId: house.id,
+              likedAdded: false,
+              dislikedAdded: false,
+              savedAdded: true,
+            },
+          ]);
+          if (screen === 'swipe') {
+            const nextLength = Math.max(0, swipeHouses.length - 1);
+            setIndex(() => Math.min(currentIndex, Math.max(0, nextLength - 1)));
+            animateCardIn();
+          }
+        }
+        setIsSaving(false);
+      });
     }
   };
 
@@ -226,6 +355,9 @@ export default function App() {
         next.delete(last.houseId);
         return next;
       });
+    }
+    if (last?.savedAdded && last.houseId) {
+      setSavedOverrideIds(prev => new Set(prev).add(last.houseId));
     }
     position.setValue({ x: 0, y: 0 });
     setIndex(last.index);
@@ -266,6 +398,23 @@ export default function App() {
         },
       }),
     [isAnimating, likeCurrentHouse, swipeOffScreen, position]
+  );
+
+  const savedDetailResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gesture) => {
+          const isHorizontal = Math.abs(gesture.dx) > Math.abs(gesture.dy);
+          return isHorizontal && Math.abs(gesture.dx) > 10;
+        },
+        onPanResponderRelease: (_, gesture) => {
+          if (Math.abs(gesture.dx) > 120) {
+            setScreen('saved');
+          }
+        },
+      }),
+    []
   );
 
   if (screen === 'home') {
@@ -324,7 +473,14 @@ export default function App() {
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
             {savedHouses.map(item => (
-              <View key={item.id} style={styles.savedCard}>
+              <Pressable
+                key={item.id}
+                style={styles.savedCard}
+                onPress={() => {
+                  setSavedDetailId(item.id);
+                  setScreen('saved-detail');
+                }}
+              >
                 <Image
                   source={{ uri: item.primary_photo_url || 'https://via.placeholder.com/600x400' }}
                   style={styles.savedImage}
@@ -355,10 +511,135 @@ export default function App() {
                 >
                   <Text style={styles.removeSavedButtonText}>Remove</Text>
                 </Pressable>
-              </View>
+              </Pressable>
             ))}
           </ScrollView>
         )}
+      </View>
+    );
+  }
+
+  if (screen === 'saved-detail') {
+    if (!savedDetailHouse) {
+      return (
+        <View style={[styles.container, styles.center]}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => setScreen('saved')}
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </Pressable>
+          <Text style={styles.endText}>
+            saved house not found
+          </Text>
+        </View>
+      );
+    }
+
+    const house = savedDetailHouse;
+    const detail = detailByHouseId[house.id];
+    const isHouseSaved = savedIds.has(house.id);
+    const descriptionText = detail?.description?.text;
+    const detailItems = Array.isArray(detail?.details) ? detail.details : [];
+    const detailAddress = detail?.location?.address;
+    const beds = detail?.description?.beds ?? house.beds;
+    const baths = detail?.description?.baths ?? house.baths;
+    const yearBuilt = detail?.description?.year_built;
+    const sqft = detail?.description?.sqft ?? house.sqft;
+    const homeTypeRaw = detail?.description?.type || detail?.description?.sub_type || house.property_type;
+    const homeType = homeTypeRaw ? homeTypeRaw.replace(/_/g, ' ') : null;
+
+    return (
+      <View style={[styles.container, styles.swipeContainer]}>
+        <Pressable
+          style={styles.backButton}
+          onPress={() => setScreen('saved')}
+        >
+          <Text style={styles.backButtonText}>Back</Text>
+        </Pressable>
+        <View {...savedDetailResponder.panHandlers} style={styles.card}>
+          {toastMessage && (
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.savedToast,
+                {
+                  opacity: savedToastOpacity,
+                  transform: [{ translateY: savedToastTranslate }],
+                },
+              ]}
+            >
+              <Text style={styles.savedToastText}>{toastMessage}</Text>
+            </Animated.View>
+          )}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.cardScrollContent}
+        >
+          <Image
+            source={{ uri: house.primary_photo_url || 'https://via.placeholder.com/600x400' }}
+            style={styles.image}
+            contentFit="cover"
+          />
+
+          <View style={styles.cardBody}>
+            <Text style={styles.price}>
+              ${house.price ? house.price.toLocaleString() : '—'}
+            </Text>
+
+            <Text style={styles.address}>
+              {detailAddress?.line || house.address_line}, {detailAddress?.city || house.city},{' '}
+              {detailAddress?.state_code || house.state}
+            </Text>
+
+            <Text style={styles.description}>
+              {beds ?? '—'} bd · {baths ?? '—'} ba · {sqft ?? '—'} sqft
+              {homeType ? ` · ${homeType}` : ''}
+            </Text>
+
+            <View style={styles.cardActions}>
+              <Text
+                style={[
+                  styles.saveButton,
+                  isHouseSaved && styles.saved,
+                ]}
+                onPress={() => saveCurrentHouse(house)}
+              >
+                {isHouseSaved ? 'Saved ✓' : 'Save'}
+              </Text>
+            </View>
+
+            <Text style={styles.detailHeader}>Description</Text>
+            <Text style={styles.detailBody}>
+              {descriptionText || 'No description available.'}
+            </Text>
+
+            <Text style={styles.detailHeader}>Details</Text>
+            <Text style={styles.detailBody}>
+              {beds ?? '—'} beds · {baths ?? '—'} baths · {yearBuilt ?? '—'} year built · {sqft ?? '—'} sqft
+            </Text>
+
+            <Text style={styles.detailHeader}>Additional Details</Text>
+            {detailItems.length === 0 ? (
+              <Text style={styles.detailBody}>No additional details available.</Text>
+            ) : (
+              detailItems.map((item, itemIndex) => {
+                const lines = Array.isArray(item?.text) ? item.text : [item?.text].filter(Boolean);
+                return (
+                  <View key={`${item?.category || 'detail'}-${itemIndex}`} style={styles.detailItem}>
+                    <Text style={styles.detailSubheader}>{item?.category || 'Details'}</Text>
+                    {lines.map((line, lineIndex) => (
+                      <Text key={`${itemIndex}-${lineIndex}`} style={styles.detailBody}>
+                        {line}
+                      </Text>
+                    ))}
+                  </View>
+                );
+              })
+            )}
+          </View>
+        </ScrollView>
+        </View>
       </View>
     );
   }
@@ -381,12 +662,16 @@ export default function App() {
 
   const house = swipeHouses[index];
   const detail = detailByHouseId[house.id];
+  const isHouseSaved = savedIds.has(house.id);
   const descriptionText = detail?.description?.text;
   const detailItems = Array.isArray(detail?.details) ? detail.details : [];
+  const detailAddress = detail?.location?.address;
   const beds = detail?.description?.beds ?? house.beds;
   const baths = detail?.description?.baths ?? house.baths;
   const yearBuilt = detail?.description?.year_built;
   const sqft = detail?.description?.sqft ?? house.sqft;
+  const homeTypeRaw = detail?.description?.type || detail?.description?.sub_type || house.property_type;
+  const homeType = homeTypeRaw ? homeTypeRaw.replace(/_/g, ' ') : null;
 
   return (
     <View style={[styles.container, styles.swipeContainer]}>
@@ -411,6 +696,7 @@ export default function App() {
         style={[
           styles.card,
           {
+            opacity: cardOpacity,
             transform: [
               { translateX: position.x },
               { translateY: position.y },
@@ -418,6 +704,20 @@ export default function App() {
           },
         ]}
       >
+        {toastMessage && (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.savedToast,
+              {
+                opacity: savedToastOpacity,
+                transform: [{ translateY: savedToastTranslate }],
+              },
+            ]}
+          >
+            <Text style={styles.savedToastText}>{toastMessage}</Text>
+          </Animated.View>
+        )}
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.cardScrollContent}
@@ -428,67 +728,71 @@ export default function App() {
             contentFit="cover"
           />
 
-          <Text style={styles.price}>
-            ${house.price ? house.price.toLocaleString() : '—'}
-          </Text>
-
-          <Text style={styles.address}>
-            {house.address_line}, {house.city}, {house.state}
-          </Text>
-
-          <Text style={styles.description}>
-            {house.beds} bd · {house.baths} ba · {house.sqft} sqft
-          </Text>
-
-          <View style={styles.cardActions}>
-            <Text
-              style={[
-                styles.saveButton,
-                savedIds.has(house.id) && styles.saved,
-              ]}
-              onPress={saveCurrentHouse}
-            >
-              {savedIds.has(house.id) ? 'Saved ✓' : 'Save'}
+          <View style={styles.cardBody}>
+            <Text style={styles.price}>
+              ${house.price ? house.price.toLocaleString() : '—'}
             </Text>
-            <Text
-              style={[
-                styles.undoButton,
-                history.length === 0 && styles.undoDisabled,
-              ]}
-              onPress={undoSwipe}
-            >
-              Undo
+
+            <Text style={styles.address}>
+              {detailAddress?.line || house.address_line}, {detailAddress?.city || house.city},{' '}
+              {detailAddress?.state_code || house.state}
             </Text>
+
+            <Text style={styles.description}>
+              {beds ?? '—'} bd · {baths ?? '—'} ba · {sqft ?? '—'} sqft
+              {homeType ? ` · ${homeType}` : ''}
+            </Text>
+
+            <View style={styles.cardActions}>
+              <Text
+                style={[
+                  styles.saveButton,
+                  isHouseSaved && styles.saved,
+                ]}
+                onPress={() => saveCurrentHouse()}
+              >
+                {isHouseSaved ? 'Saved ✓' : 'Save'}
+              </Text>
+              <Text
+                style={[
+                  styles.undoButton,
+                  history.length === 0 && styles.undoDisabled,
+                ]}
+                onPress={undoSwipe}
+              >
+                Undo
+              </Text>
+            </View>
+
+            <Text style={styles.detailHeader}>Description</Text>
+            <Text style={styles.detailBody}>
+              {descriptionText || 'No description available.'}
+            </Text>
+
+            <Text style={styles.detailHeader}>Details</Text>
+            <Text style={styles.detailBody}>
+              {beds ?? '—'} beds · {baths ?? '—'} baths · {yearBuilt ?? '—'} year built · {sqft ?? '—'} sqft
+            </Text>
+
+            <Text style={styles.detailHeader}>Additional Details</Text>
+            {detailItems.length === 0 ? (
+              <Text style={styles.detailBody}>No additional details available.</Text>
+            ) : (
+              detailItems.map((item, itemIndex) => {
+                const lines = Array.isArray(item?.text) ? item.text : [item?.text].filter(Boolean);
+                return (
+                  <View key={`${item?.category || 'detail'}-${itemIndex}`} style={styles.detailItem}>
+                    <Text style={styles.detailSubheader}>{item?.category || 'Details'}</Text>
+                    {lines.map((line, lineIndex) => (
+                      <Text key={`${itemIndex}-${lineIndex}`} style={styles.detailBody}>
+                        {line}
+                      </Text>
+                    ))}
+                  </View>
+                );
+              })
+            )}
           </View>
-
-          <Text style={styles.detailHeader}>Description</Text>
-          <Text style={styles.detailBody}>
-            {descriptionText || 'No description available.'}
-          </Text>
-
-          <Text style={styles.detailHeader}>Details</Text>
-          <Text style={styles.detailBody}>
-            {beds ?? '—'} beds · {baths ?? '—'} baths · {yearBuilt ?? '—'} year built · {sqft ?? '—'} sqft
-          </Text>
-
-          <Text style={styles.detailHeader}>Additional Details</Text>
-          {detailItems.length === 0 ? (
-            <Text style={styles.detailBody}>No additional details available.</Text>
-          ) : (
-            detailItems.map((item, itemIndex) => {
-              const lines = Array.isArray(item?.text) ? item.text : [item?.text].filter(Boolean);
-              return (
-                <View key={`${item?.category || 'detail'}-${itemIndex}`} style={styles.detailItem}>
-                  <Text style={styles.detailSubheader}>{item?.category || 'Details'}</Text>
-                  {lines.map((line, lineIndex) => (
-                    <Text key={`${itemIndex}-${lineIndex}`} style={styles.detailBody}>
-                      {line}
-                    </Text>
-                  ))}
-                </View>
-              );
-            })
-          )}
         </ScrollView>
       </Animated.View>
     </View>
@@ -502,8 +806,9 @@ const styles = StyleSheet.create({
     paddingTop: 120,
   },
   swipeContainer: {
-    paddingTop: 80,
-    paddingBottom: 20,
+    paddingTop: 60,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
   },
   homeGraphic: {
     width: 220,
@@ -632,12 +937,19 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#d7d2ceff',
-    borderRadius: 12,
-    padding: 10,
+    borderRadius: 28,
+    padding: 0,
     elevation: 3,
     flex: 1,
+    marginBottom: 0,
+    overflow: 'hidden',
   },
   cardScrollContent: {
+    paddingBottom: 20,
+  },
+  cardBody: {
+    paddingHorizontal: 12,
+    paddingTop: 12,
     paddingBottom: 20,
   },
   cardActions: {
@@ -645,9 +957,9 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 360,
-    borderRadius: 30,
-    marginBottom: 20,
+    height: 420,
+    borderRadius: 28,
+    marginBottom: 0,
     backgroundColor: '#eee',
     borderWidth: .1,
     borderColor: '#f2f2f2',
@@ -688,6 +1000,24 @@ const styles = StyleSheet.create({
   },
   detailItem: {
     marginTop: 4,
+  },
+  savedToast: {
+    position: 'absolute',
+    top: 140,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  savedToastText: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
+    backgroundColor: '#111827',
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   likeBadgeContainer: {
     position: 'absolute',

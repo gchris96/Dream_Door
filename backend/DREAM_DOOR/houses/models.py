@@ -58,7 +58,39 @@ class HouseDetail(models.Model):
 
     def __str__(self):
         return f"Detail → House {self.house_id}"
-    
+
+
+class HousePhoto(models.Model):
+    house = models.OneToOneField(
+        House,
+        on_delete=models.CASCADE,
+        related_name="photos",
+    )
+    payload = models.JSONField(default=list)
+    fetched_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Photos → House {self.house_id}"
+
+
+class HouseImportError(models.Model):
+    house = models.ForeignKey(
+        House,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="import_errors",
+    )
+    external_id = models.CharField(max_length=100, blank=True)
+    import_type = models.CharField(max_length=20)
+    error_message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        label = self.external_id or "unknown"
+        return f"ImportError ({self.import_type}) → {label}"
+
+
 class HouseLike(models.Model):
     house = models.ForeignKey(
         House,
