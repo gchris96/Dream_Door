@@ -3,13 +3,16 @@ import {
   View,
   StyleSheet,
   PanResponder,
-  Animated,
+  Animated as RNAnimated,
   Dimensions,
   ScrollView,
   Pressable,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 
 export default function App() {
   const [screen, setScreen] = useState('home');
@@ -27,17 +30,25 @@ export default function App() {
   const [isSaving, setIsSaving] = useState(false);
   const [history, setHistory] = useState([]);
   const [detailByHouseId, setDetailByHouseId] = useState({});
+  const [photoByHouseId, setPhotoByHouseId] = useState({});
   const [showLikeBadge, setShowLikeBadge] = useState(false);
   const [likeBadgeId, setLikeBadgeId] = useState(null);
   const [showDislikeBadge, setShowDislikeBadge] = useState(false);
   const [dislikeBadgeId, setDislikeBadgeId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
+  const [showPhotoViewer, setShowPhotoViewer] = useState(false);
+  const [photoViewerHouseId, setPhotoViewerHouseId] = useState(null);
+  const [photoViewerIndex, setPhotoViewerIndex] = useState(0);
 
-  const position = useRef(new Animated.ValueXY()).current;
-  const cardOpacity = useRef(new Animated.Value(1)).current;
-  const savedToastOpacity = useRef(new Animated.Value(0)).current;
-  const savedToastTranslate = useRef(new Animated.Value(20)).current;
+  const position = useRef(new RNAnimated.ValueXY()).current;
+  const cardOpacity = useRef(new RNAnimated.Value(1)).current;
+  const savedToastOpacity = useRef(new RNAnimated.Value(0)).current;
+  const savedToastTranslate = useRef(new RNAnimated.Value(20)).current;
+  const photoViewerTranslate = useRef(new RNAnimated.Value(0)).current;
+  const photoViewerOpacity = useRef(new RNAnimated.Value(1)).current;
+  const photoListRef = useRef(null);
   const screenWidth = Dimensions.get('window').width;
+  const screenHeight = Dimensions.get('window').height;
   const swipeHouses = useMemo(
     () => houses.filter(house => !savedIds.has(house.id) || savedOverrideIds.has(house.id)),
     [houses, savedIds, savedOverrideIds]
@@ -119,9 +130,23 @@ export default function App() {
       .catch(() => {});
   }, [screen, swipeHouses, index, savedDetailHouse, detailByHouseId]);
 
+  useEffect(() => {
+    if (screen !== 'swipe' && screen !== 'saved-detail') return;
+    const current = screen === 'swipe' ? swipeHouses[index] : savedDetailHouse;
+    if (!current || photoByHouseId[current.id]) return;
+
+    fetch(`http://127.0.0.1:8000/api/houses/${current.id}/photos/`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (!data) return;
+        setPhotoByHouseId(prev => ({ ...prev, [current.id]: data }));
+      })
+      .catch(() => {});
+  }, [screen, swipeHouses, index, savedDetailHouse, photoByHouseId]);
+
   const animateCardIn = () => {
     cardOpacity.setValue(0);
-    Animated.timing(cardOpacity, {
+    RNAnimated.timing(cardOpacity, {
       toValue: 1,
       duration: 300,
       useNativeDriver: false,
@@ -151,7 +176,7 @@ export default function App() {
       setShowDislikeBadge(true);
     }
 
-    Animated.timing(position, {
+    RNAnimated.timing(position, {
       toValue: {
         x: direction === 'right' ? screenWidth : -screenWidth,
         y: 0,
@@ -189,7 +214,7 @@ export default function App() {
     setShowLikeBadge(true);
     const currentIndex = index;
 
-    Animated.timing(position, {
+    RNAnimated.timing(position, {
       toValue: { x: screenWidth, y: 0 },
       duration: 220,
       useNativeDriver: false,
@@ -228,27 +253,27 @@ export default function App() {
       setToastMessage('Unsaved');
       savedToastOpacity.setValue(0);
       savedToastTranslate.setValue(20);
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(savedToastOpacity, {
+      RNAnimated.sequence([
+        RNAnimated.parallel([
+          RNAnimated.timing(savedToastOpacity, {
             toValue: 1,
             duration: 260,
             useNativeDriver: true,
           }),
-          Animated.timing(savedToastTranslate, {
+          RNAnimated.timing(savedToastTranslate, {
             toValue: 0,
             duration: 260,
             useNativeDriver: true,
           }),
         ]),
-        Animated.delay(700),
-        Animated.parallel([
-          Animated.timing(savedToastOpacity, {
+        RNAnimated.delay(700),
+        RNAnimated.parallel([
+          RNAnimated.timing(savedToastOpacity, {
             toValue: 0,
             duration: 260,
             useNativeDriver: true,
           }),
-          Animated.timing(savedToastTranslate, {
+          RNAnimated.timing(savedToastTranslate, {
             toValue: -10,
             duration: 260,
             useNativeDriver: true,
@@ -283,27 +308,27 @@ export default function App() {
       setToastMessage('Saved!');
       savedToastOpacity.setValue(0);
       savedToastTranslate.setValue(20);
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(savedToastOpacity, {
+      RNAnimated.sequence([
+        RNAnimated.parallel([
+          RNAnimated.timing(savedToastOpacity, {
             toValue: 1,
             duration: 260,
             useNativeDriver: true,
           }),
-          Animated.timing(savedToastTranslate, {
+          RNAnimated.timing(savedToastTranslate, {
             toValue: 0,
             duration: 260,
             useNativeDriver: true,
           }),
         ]),
-        Animated.delay(700),
-        Animated.parallel([
-          Animated.timing(savedToastOpacity, {
+        RNAnimated.delay(700),
+        RNAnimated.parallel([
+          RNAnimated.timing(savedToastOpacity, {
             toValue: 0,
             duration: 260,
             useNativeDriver: true,
           }),
-          Animated.timing(savedToastTranslate, {
+          RNAnimated.timing(savedToastTranslate, {
             toValue: -10,
             duration: 260,
             useNativeDriver: true,
@@ -390,7 +415,7 @@ export default function App() {
           } else if (gesture.dx < -120) {
             swipeOffScreen('left');
           } else {
-            Animated.spring(position, {
+            RNAnimated.spring(position, {
               toValue: { x: 0, y: 0 },
               useNativeDriver: false,
             }).start();
@@ -399,6 +424,78 @@ export default function App() {
       }),
     [isAnimating, likeCurrentHouse, swipeOffScreen, position]
   );
+
+  const closePhotoViewer = (direction = 1) => {
+    RNAnimated.parallel([
+      RNAnimated.timing(photoViewerTranslate, {
+        toValue: direction * screenHeight,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      RNAnimated.timing(photoViewerOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      photoViewerTranslate.setValue(0);
+      photoViewerOpacity.setValue(1);
+      setShowPhotoViewer(false);
+      setPhotoViewerHouseId(null);
+      setPhotoViewerIndex(0);
+    });
+  };
+
+  const photoGestureEvent = RNAnimated.event(
+    [{ nativeEvent: { translationY: photoViewerTranslate } }],
+    {
+      useNativeDriver: true,
+      listener: (event) => {
+        const dy = event.nativeEvent.translationY || 0;
+        const fade = Math.min(Math.abs(dy) / screenHeight, 0.5);
+        photoViewerOpacity.setValue(1 - fade);
+      },
+    }
+  );
+
+  const onPhotoHandlerStateChange = (event) => {
+    const { state, translationY } = event.nativeEvent;
+    if (state !== State.END && state !== State.CANCELLED && state !== State.FAILED) {
+      return;
+    }
+    if (Math.abs(translationY) > 80) {
+      closePhotoViewer(translationY > 0 ? 1 : -1);
+      return;
+    }
+    RNAnimated.parallel([
+      RNAnimated.spring(photoViewerTranslate, {
+        toValue: 0,
+        useNativeDriver: true,
+      }),
+      RNAnimated.timing(photoViewerOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const openPhotoViewer = (houseId, initialIndex = 0) => {
+    setPhotoViewerHouseId(houseId);
+    setPhotoViewerIndex(initialIndex);
+    setShowPhotoViewer(true);
+    photoViewerTranslate.setValue(0);
+    photoViewerOpacity.setValue(1);
+    requestAnimationFrame(() => {
+      if (photoListRef.current && initialIndex > 0) {
+        photoListRef.current.scrollToIndex({ index: initialIndex, animated: false });
+      }
+    });
+  };
+
+  const currentPhotoList = photoViewerHouseId
+    ? (photoByHouseId[photoViewerHouseId] || [])
+    : [];
 
   const savedDetailResponder = useMemo(
     () =>
@@ -436,9 +533,9 @@ export default function App() {
         <Pressable
           style={styles.primaryButton}
           onPress={() => {
-            setIndex(0);
-            setHistory([]);
-            position.setValue({ x: 0, y: 0 });
+            // setIndex(0);
+            // setHistory([]);
+            // position.setValue({ x: 0, y: 0 });
             setScreen('swipe');
           }}
         >
@@ -559,7 +656,7 @@ export default function App() {
         </Pressable>
         <View {...savedDetailResponder.panHandlers} style={styles.card}>
           {toastMessage && (
-            <Animated.View
+            <RNAnimated.View
               pointerEvents="none"
               style={[
                 styles.savedToast,
@@ -570,17 +667,21 @@ export default function App() {
               ]}
             >
               <Text style={styles.savedToastText}>{toastMessage}</Text>
-            </Animated.View>
+            </RNAnimated.View>
           )}
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.cardScrollContent}
-        >
-          <Image
-            source={{ uri: house.primary_photo_url || 'https://via.placeholder.com/600x400' }}
-            style={styles.image}
-            contentFit="cover"
-          />
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.cardScrollContent}
+          >
+            <Pressable
+              onPress={() => openPhotoViewer(house.id, 0)}
+            >
+              <Image
+                source={{ uri: house.primary_photo_url || 'https://via.placeholder.com/600x400' }}
+                style={styles.image}
+                contentFit="cover"
+              />
+            </Pressable>
 
           <View style={styles.cardBody}>
             <Text style={styles.price}>
@@ -638,8 +739,64 @@ export default function App() {
               })
             )}
           </View>
-        </ScrollView>
+          </ScrollView>
         </View>
+        <Modal
+          visible={showPhotoViewer}
+          transparent
+          animationType="none"
+          onRequestClose={closePhotoViewer}
+        >
+          <View style={styles.photoViewerBackdrop}>
+            <PanGestureHandler
+              onGestureEvent={photoGestureEvent}
+              onHandlerStateChange={onPhotoHandlerStateChange}
+              activeOffsetY={[-10, 10]}
+              failOffsetX={[-15, 15]}
+            >
+              <RNAnimated.View
+                style={[
+                  styles.photoViewerDragLayer,
+                  {
+                    transform: [{ translateY: photoViewerTranslate }],
+                    opacity: photoViewerOpacity,
+                  },
+                ]}
+              >
+                <Pressable style={styles.photoViewerBack} onPress={closePhotoViewer}>
+                  <Text style={styles.photoViewerBackText}>Back</Text>
+                </Pressable>
+                <FlatList
+                  ref={photoListRef}
+                  data={currentPhotoList}
+                  keyExtractor={(item, idx) => `${photoViewerHouseId || 'house'}-${idx}`}
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  onMomentumScrollEnd={(event) => {
+                    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
+                    setPhotoViewerIndex(nextIndex);
+                  }}
+                  directionalLockEnabled
+                  renderItem={({ item }) => (
+                    <View
+                      style={[styles.photoViewerSlide, { width: screenWidth }]}
+                    >
+                      <Image
+                        source={{ uri: item?.href || 'https://via.placeholder.com/600x400' }}
+                        style={styles.photoViewerImage}
+                        contentFit="contain"
+                      />
+                    </View>
+                  )}
+                />
+                <Text style={styles.photoViewerCounter}>
+                  {currentPhotoList.length ? `${photoViewerIndex + 1}/${currentPhotoList.length}` : '0/0'}
+                </Text>
+              </RNAnimated.View>
+            </PanGestureHandler>
+          </View>
+        </Modal>
       </View>
     );
   }
@@ -660,18 +817,128 @@ export default function App() {
     );
   }
 
-  const house = swipeHouses[index];
-  const detail = detailByHouseId[house.id];
-  const isHouseSaved = savedIds.has(house.id);
-  const descriptionText = detail?.description?.text;
-  const detailItems = Array.isArray(detail?.details) ? detail.details : [];
-  const detailAddress = detail?.location?.address;
-  const beds = detail?.description?.beds ?? house.beds;
-  const baths = detail?.description?.baths ?? house.baths;
-  const yearBuilt = detail?.description?.year_built;
-  const sqft = detail?.description?.sqft ?? house.sqft;
-  const homeTypeRaw = detail?.description?.type || detail?.description?.sub_type || house.property_type;
-  const homeType = homeTypeRaw ? homeTypeRaw.replace(/_/g, ' ') : null;
+  const currentHouse = swipeHouses[index];
+  const nextHouse = swipeHouses[index + 1];
+
+  const getHouseMeta = (house) => {
+    const detail = detailByHouseId[house.id];
+    const descriptionText = detail?.description?.text;
+    const detailItems = Array.isArray(detail?.details) ? detail.details : [];
+    const detailAddress = detail?.location?.address;
+    const beds = detail?.description?.beds ?? house.beds;
+    const baths = detail?.description?.baths ?? house.baths;
+    const yearBuilt = detail?.description?.year_built;
+    const sqft = detail?.description?.sqft ?? house.sqft;
+    const homeTypeRaw = detail?.description?.type || detail?.description?.sub_type || house.property_type;
+    const homeType = homeTypeRaw ? homeTypeRaw.replace(/_/g, ' ') : null;
+
+    return {
+      descriptionText,
+      detailItems,
+      detailAddress,
+      beds,
+      baths,
+      yearBuilt,
+      sqft,
+      homeType,
+    };
+  };
+
+  const renderHouseScrollContent = (house, meta, options = {}) => {
+    const isHouseSaved = savedIds.has(house.id);
+    const showActions = options.allowSave || options.showUndo;
+    return (
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.cardScrollContent}
+      >
+        <Pressable
+          onPress={options.allowImagePress ? () => openPhotoViewer(house.id, 0) : undefined}
+        >
+          <Image
+            source={{ uri: house.primary_photo_url || 'https://via.placeholder.com/600x400' }}
+            style={styles.image}
+            contentFit="cover"
+          />
+        </Pressable>
+
+        <View style={styles.cardBody}>
+          <Text style={styles.price}>
+            ${house.price ? house.price.toLocaleString() : '—'}
+          </Text>
+
+          <Text style={styles.address}>
+            {meta.detailAddress?.line || house.address_line}, {meta.detailAddress?.city || house.city},{' '}
+            {meta.detailAddress?.state_code || house.state}
+          </Text>
+
+          <Text style={styles.description}>
+            {meta.beds ?? '—'} bd · {meta.baths ?? '—'} ba · {meta.sqft ?? '—'} sqft
+            {meta.homeType ? ` · ${meta.homeType}` : ''}
+          </Text>
+
+          {showActions && (
+            <View style={styles.cardActions}>
+              {options.allowSave && (
+                <Text
+                  style={[
+                    styles.saveButton,
+                    isHouseSaved && styles.saved,
+                  ]}
+                  onPress={() => saveCurrentHouse()}
+                >
+                  {isHouseSaved ? 'Saved ✓' : 'Save'}
+                </Text>
+              )}
+              {options.showUndo && (
+                <Text
+                  style={[
+                    styles.undoButton,
+                    history.length === 0 && styles.undoDisabled,
+                  ]}
+                  onPress={undoSwipe}
+                >
+                  Undo
+                </Text>
+              )}
+            </View>
+          )}
+
+          <Text style={styles.detailHeader}>Description</Text>
+          <Text style={styles.detailBody}>
+            {meta.descriptionText || 'No description available.'}
+          </Text>
+
+          <Text style={styles.detailHeader}>Details</Text>
+          <Text style={styles.detailBody}>
+            {meta.beds ?? '—'} beds · {meta.baths ?? '—'} baths · {meta.yearBuilt ?? '—'} year built · {meta.sqft ?? '—'} sqft
+          </Text>
+
+          <Text style={styles.detailHeader}>Additional Details</Text>
+          {meta.detailItems.length === 0 ? (
+            <Text style={styles.detailBody}>No additional details available.</Text>
+          ) : (
+            meta.detailItems.map((item, itemIndex) => {
+              const lines = Array.isArray(item?.text) ? item.text : [item?.text].filter(Boolean);
+              return (
+                <View key={`${item?.category || 'detail'}-${itemIndex}`} style={styles.detailItem}>
+                  <Text style={styles.detailSubheader}>{item?.category || 'Details'}</Text>
+                  {lines.map((line, lineIndex) => (
+                    <Text key={`${itemIndex}-${lineIndex}`} style={styles.detailBody}>
+                      {line}
+                    </Text>
+                  ))}
+                </View>
+              );
+            })
+          )}
+        </View>
+      </ScrollView>
+    );
+  };
+
+  const currentMeta = getHouseMeta(currentHouse);
+  const nextMeta = nextHouse ? getHouseMeta(nextHouse) : null;
 
   return (
     <View style={[styles.container, styles.swipeContainer]}>
@@ -681,120 +948,112 @@ export default function App() {
       >
         <Text style={styles.backButtonText}>Back</Text>
       </Pressable>
-      {showLikeBadge && likeBadgeId === house.id && (
+      {showLikeBadge && likeBadgeId === currentHouse.id && (
         <View style={styles.likeBadgeContainer}>
           <Text style={styles.likeBadge}>❤️</Text>
         </View>
       )}
-      {showDislikeBadge && dislikeBadgeId === house.id && (
+      {showDislikeBadge && dislikeBadgeId === currentHouse.id && (
         <View style={styles.dislikeBadgeContainer}>
           <Text style={styles.dislikeBadge}>👎</Text>
         </View>
       )}
-      <Animated.View
-        {...panResponder.panHandlers}
-        style={[
-          styles.card,
-          {
-            opacity: cardOpacity,
-            transform: [
-              { translateX: position.x },
-              { translateY: position.y },
-            ],
-          },
-        ]}
-      >
-        {toastMessage && (
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.savedToast,
-              {
-                opacity: savedToastOpacity,
-                transform: [{ translateY: savedToastTranslate }],
-              },
-            ]}
-          >
-            <Text style={styles.savedToastText}>{toastMessage}</Text>
-          </Animated.View>
-        )}
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.cardScrollContent}
-        >
-          <Image
-            source={{ uri: house.primary_photo_url || 'https://via.placeholder.com/600x400' }}
-            style={styles.image}
-            contentFit="cover"
-          />
-
-          <View style={styles.cardBody}>
-            <Text style={styles.price}>
-              ${house.price ? house.price.toLocaleString() : '—'}
-            </Text>
-
-            <Text style={styles.address}>
-              {detailAddress?.line || house.address_line}, {detailAddress?.city || house.city},{' '}
-              {detailAddress?.state_code || house.state}
-            </Text>
-
-            <Text style={styles.description}>
-              {beds ?? '—'} bd · {baths ?? '—'} ba · {sqft ?? '—'} sqft
-              {homeType ? ` · ${homeType}` : ''}
-            </Text>
-
-            <View style={styles.cardActions}>
-              <Text
-                style={[
-                  styles.saveButton,
-                  isHouseSaved && styles.saved,
-                ]}
-                onPress={() => saveCurrentHouse()}
-              >
-                {isHouseSaved ? 'Saved ✓' : 'Save'}
-              </Text>
-              <Text
-                style={[
-                  styles.undoButton,
-                  history.length === 0 && styles.undoDisabled,
-                ]}
-                onPress={undoSwipe}
-              >
-                Undo
-              </Text>
-            </View>
-
-            <Text style={styles.detailHeader}>Description</Text>
-            <Text style={styles.detailBody}>
-              {descriptionText || 'No description available.'}
-            </Text>
-
-            <Text style={styles.detailHeader}>Details</Text>
-            <Text style={styles.detailBody}>
-              {beds ?? '—'} beds · {baths ?? '—'} baths · {yearBuilt ?? '—'} year built · {sqft ?? '—'} sqft
-            </Text>
-
-            <Text style={styles.detailHeader}>Additional Details</Text>
-            {detailItems.length === 0 ? (
-              <Text style={styles.detailBody}>No additional details available.</Text>
-            ) : (
-              detailItems.map((item, itemIndex) => {
-                const lines = Array.isArray(item?.text) ? item.text : [item?.text].filter(Boolean);
-                return (
-                  <View key={`${item?.category || 'detail'}-${itemIndex}`} style={styles.detailItem}>
-                    <Text style={styles.detailSubheader}>{item?.category || 'Details'}</Text>
-                    {lines.map((line, lineIndex) => (
-                      <Text key={`${itemIndex}-${lineIndex}`} style={styles.detailBody}>
-                        {line}
-                      </Text>
-                    ))}
-                  </View>
-                );
-              })
-            )}
+      <View style={styles.cardStack}>
+        {nextHouse && nextMeta && (
+          <View style={[styles.card, styles.underCard]} pointerEvents="none">
+            {renderHouseScrollContent(nextHouse, nextMeta, { allowImagePress: false, allowSave: false })}
           </View>
-        </ScrollView>
-      </Animated.View>
+        )}
+        <RNAnimated.View
+          {...panResponder.panHandlers}
+          style={[
+            styles.card,
+            {
+              opacity: cardOpacity,
+              transform: [
+                { translateX: position.x },
+                { translateY: position.y },
+              ],
+            },
+          ]}
+        >
+          {toastMessage && (
+            <RNAnimated.View
+              pointerEvents="none"
+              style={[
+                styles.savedToast,
+                {
+                  opacity: savedToastOpacity,
+                  transform: [{ translateY: savedToastTranslate }],
+                },
+              ]}
+            >
+              <Text style={styles.savedToastText}>{toastMessage}</Text>
+            </RNAnimated.View>
+          )}
+          {renderHouseScrollContent(currentHouse, currentMeta, {
+            allowImagePress: true,
+            allowSave: true,
+            showUndo: true,
+          })}
+        </RNAnimated.View>
+      </View>
+      <Modal
+        visible={showPhotoViewer}
+        transparent
+        animationType="none"
+        onRequestClose={closePhotoViewer}
+      >
+        <View style={styles.photoViewerBackdrop}>
+          <PanGestureHandler
+            onGestureEvent={photoGestureEvent}
+            onHandlerStateChange={onPhotoHandlerStateChange}
+            activeOffsetY={[-10, 10]}
+            failOffsetX={[-15, 15]}
+          >
+            <RNAnimated.View
+              style={[
+                styles.photoViewerDragLayer,
+                {
+                  transform: [{ translateY: photoViewerTranslate }],
+                  opacity: photoViewerOpacity,
+                },
+              ]}
+            >
+              <Pressable style={styles.photoViewerBack} onPress={closePhotoViewer}>
+                <Text style={styles.photoViewerBackText}>Back</Text>
+              </Pressable>
+              <FlatList
+                ref={photoListRef}
+                data={currentPhotoList}
+                keyExtractor={(item, idx) => `${photoViewerHouseId || 'house'}-${idx}`}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={(event) => {
+                  const nextIndex = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
+                  setPhotoViewerIndex(nextIndex);
+                }}
+                directionalLockEnabled
+                renderItem={({ item }) => (
+                  <View
+                    style={[styles.photoViewerSlide, { width: screenWidth }]}
+                  >
+                    <Image
+                      source={{ uri: item?.href || 'https://via.placeholder.com/600x400' }}
+                      style={styles.photoViewerImage}
+                      contentFit="contain"
+                    />
+                  </View>
+                )}
+              />
+              <Text style={styles.photoViewerCounter}>
+                {currentPhotoList.length ? `${photoViewerIndex + 1}/${currentPhotoList.length}` : '0/0'}
+              </Text>
+            </RNAnimated.View>
+          </PanGestureHandler>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -944,6 +1203,19 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     overflow: 'hidden',
   },
+  cardStack: {
+    flex: 1,
+    position: 'relative',
+  },
+  underCard: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    opacity: 0.12,
+    transform: [{ scale: 0.98 }, { translateY: 8 }],
+  },
   cardScrollContent: {
     paddingBottom: 20,
   },
@@ -951,6 +1223,53 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 20,
+  },
+  photoViewerBackdrop: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: '#000',
+  },
+  photoViewerDragLayer: {
+    flex: 1,
+  },
+  photoViewerBack: {
+    position: 'absolute',
+    top: 60,
+    left: 16,
+    zIndex: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  photoViewerBackText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  photoViewerSlide: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+  },
+  photoViewerImage: {
+    width: '100%',
+    height: '100%',
+  },
+  photoViewerCounter: {
+    position: 'absolute',
+    bottom: 30,
+    alignSelf: 'center',
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   cardActions: {
     gap: 8,

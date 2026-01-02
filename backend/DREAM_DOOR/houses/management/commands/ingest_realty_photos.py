@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -11,6 +12,32 @@ from houses.models import House, HouseImportError, HousePhoto
 
 API_HOST = "realty-in-us.p.rapidapi.com"
 PHOTOS_ENDPOINT = "https://realty-in-us.p.rapidapi.com/properties/v3/get-photos"
+
+SIZE_EXT_RE = re.compile(r"([a-z])(\.(?:jpg|jpeg|png))$", re.IGNORECASE)
+
+
+def _swap_size(url, size):
+    if not isinstance(url, str):
+        return None
+    match = SIZE_EXT_RE.search(url)
+    if not match:
+        return None
+    return f"{url[:match.start(1)]}{size}{match.group(2)}"
+
+
+def _normalize_photo(photo):
+    if not isinstance(photo, dict):
+        return photo
+    href = photo.get("href")
+    if not href:
+        return photo
+    updated_href = _swap_size(href, "o")
+    if not updated_href:
+        return photo
+    normalized = dict(photo)
+    normalized["href"] = updated_href
+    normalized["href_fallback"] = _swap_size(href, "l")
+    return normalized
 
 
 def _extract_photos(payload):
@@ -140,6 +167,7 @@ class Command(BaseCommand):
                 break
 
             photos_payload = _extract_photos(payload)
+            photos_payload = [_normalize_photo(photo) for photo in photos_payload]
             _, created = HousePhoto.objects.update_or_create(
                 house=house,
                 defaults={"payload": photos_payload or []},
