@@ -11,7 +11,6 @@ import {
   FlatList,
   TextInput,
   RefreshControl,
-  Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useFonts, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
@@ -19,7 +18,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
 
 export default function App() {
-  const API_BASE = Platform?.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://127.0.0.1:8000';
+  const API_BASE = 'https://<railway-backend-url>';
   const [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
   });
