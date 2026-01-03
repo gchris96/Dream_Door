@@ -1,1 +1,1 @@
-web: gunicorn DREAM_DOOR.wsgi
+web: python manage.py migrate && gunicorn DREAM_DOOR.wsgi
