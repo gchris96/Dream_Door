@@ -10,12 +10,17 @@ import {
   Modal,
   FlatList,
   TextInput,
+  RefreshControl,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { useFonts, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    Poppins_600SemiBold,
+  });
   const [screen, setScreen] = useState('home');
   const [houses, setHouses] = useState([]);
   const [index, setIndex] = useState(0);
@@ -59,6 +64,9 @@ export default function App() {
   const [filterReturnTo, setFilterReturnTo] = useState(null);
   const [showFilterPrompt, setShowFilterPrompt] = useState(false);
   const [filterTrackWidth, setFilterTrackWidth] = useState(0);
+  const [housesError, setHousesError] = useState(false);
+  const [isLoadingHouses, setIsLoadingHouses] = useState(true);
+  const [isRefreshingHouses, setIsRefreshingHouses] = useState(false);
 
   const position = useRef(new RNAnimated.ValueXY()).current;
   const cardOpacity = useRef(new RNAnimated.Value(1)).current;
@@ -156,18 +164,28 @@ export default function App() {
   // -------------------------
   // LOAD HOUSES
   // -------------------------
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch('http://127.0.0.1:8000/api/deck/');
-        const data = await res.json();
-        setHouses(data.results);
-      } catch (e) {
-        console.error('API error:', e);
-      }
-    };
+  const loadHouses = async (isRefresh = false) => {
+    if (isRefresh) {
+      setIsRefreshingHouses(true);
+    } else {
+      setIsLoadingHouses(true);
+    }
+    setHousesError(false);
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/deck/');
+      const data = await res.json();
+      setHouses(data.results);
+    } catch (e) {
+      setHousesError(true);
+      console.error('API error:', e);
+    } finally {
+      setIsLoadingHouses(false);
+      setIsRefreshingHouses(false);
+    }
+  };
 
-    load();
+  useEffect(() => {
+    loadHouses();
   }, []);
 
   useEffect(() => {
@@ -234,6 +252,21 @@ export default function App() {
       })
       .catch(() => {});
   }, [screen, swipeHouses, index, savedDetailHouse, photoByHouseId]);
+
+  useEffect(() => {
+    if (screen !== 'saved' && screen !== 'liked' && screen !== 'disliked') return;
+    const list = screen === 'saved' ? savedHouses : (screen === 'liked' ? likedHouses : dislikedHouses);
+    list.forEach((house) => {
+      if (!house || photoByHouseId[house.id]) return;
+      fetch(`http://127.0.0.1:8000/api/houses/${house.id}/photos/`)
+        .then(res => (res.ok ? res.json() : null))
+        .then(data => {
+          if (!data) return;
+          setPhotoByHouseId(prev => ({ ...prev, [house.id]: data }));
+        })
+        .catch(() => {});
+    });
+  }, [screen, savedHouses, likedHouses, dislikedHouses, photoByHouseId]);
 
   const resetPositionNextTick = () => {
     requestAnimationFrame(() => {
@@ -764,22 +797,22 @@ export default function App() {
     return (
       <GestureHandlerRootView style={styles.root}>
         <View style={[styles.container, styles.center]}>
-          <View style={styles.homeGraphic}>
-            <View style={styles.dreamGlow} />
-            <View style={styles.sparkle} />
-            <View style={[styles.sparkle, styles.sparkleSmall]} />
-            <View style={[styles.sparkle, styles.sparkleTiny]} />
-            <View style={styles.doorFrame}>
-              <View style={styles.doorOpening} />
-              <View style={styles.doorPanelOpen}>
-                <View style={styles.doorKnob} />
-              </View>
-            </View>
-          </View>
-          <Text style={styles.homeTitle}>Dream Door</Text>
-        <Pressable
-          style={[styles.primaryButton, styles.homeButton]}
-          onPress={() => {
+          <Text
+            style={[
+              styles.homeTitle,
+              fontsLoaded ? styles.homeTitlePoppins : styles.homeTitleFallback,
+            ]}
+          >
+            Dream Door
+          </Text>
+          <Image
+            source={require('./assets/images/dream-door-house.png')}
+            style={styles.homeHeroImage}
+            contentFit="contain"
+          />
+          <Pressable
+            style={[styles.primaryButton, styles.homeButton]}
+            onPress={() => {
             setAppliedFilterMin(PRICE_MIN);
             setAppliedFilterMax(PRICE_MAX);
             setAppliedFilterHomeTypes([]);
@@ -828,6 +861,7 @@ export default function App() {
                 >
                   <Text style={styles.secondaryButtonText}>New List</Text>
                 </Pressable>
+                <View style={styles.listDropdownDivider} />
                 {filterLists.map((item) => (
                   <Pressable
                     key={item.id}
@@ -889,17 +923,22 @@ export default function App() {
     return (
       <GestureHandlerRootView style={styles.root}>
         <View style={styles.container}>
-          <Pressable
-            style={styles.backButton}
-            onPress={() => {
-              setShowFilterPrompt(false);
-              setScreen(filterReturnTo || 'home');
-            }}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.filterScrollContent}
           >
-            <Text style={styles.backButtonText}>Back</Text>
-          </Pressable>
-          <Text style={styles.sectionTitle}>Filter Homes</Text>
-          <View style={styles.filterCard}>
+            <Pressable
+              style={styles.backButton}
+              onPress={() => {
+                setShowFilterPrompt(false);
+                setScreen(filterReturnTo || 'home');
+              }}
+            >
+              <Text style={styles.backButtonText}>Back</Text>
+            </Pressable>
+            <Text style={styles.sectionTitle}>Filter Homes</Text>
+            <View style={styles.filterGroup}>
+              <View style={styles.filterCard}>
             <Text style={styles.filterLabel}>Price Range</Text>
             <Text style={styles.filterRangeLabel}>
               {formatPrice(filterMin)} - {filterMax >= PRICE_MAX ? '$10M+' : formatPrice(filterMax)}
@@ -937,6 +976,7 @@ export default function App() {
                 <TextInput
                   style={styles.filterInput}
                   keyboardType="numeric"
+                  testID="filter-min-input"
                   value={filterMinInput}
                   onChangeText={(text) => {
                     setFilterMinInput(text.replace(/[^\d]/g, ''));
@@ -956,6 +996,7 @@ export default function App() {
                 <TextInput
                   style={styles.filterInput}
                   keyboardType="numeric"
+                  testID="filter-max-input"
                   value={filterMaxInput}
                   onChangeText={(text) => {
                     setFilterMaxInput(text.replace(/[^\d]/g, ''));
@@ -972,7 +1013,7 @@ export default function App() {
               </View>
             </View>
           </View>
-          <View style={styles.filterCard}>
+              <View style={styles.filterCard}>
             <Text style={styles.filterLabel}>Home Type</Text>
             <View style={styles.filterChipRow}>
               {homeTypeOptions.map((type) => {
@@ -994,7 +1035,7 @@ export default function App() {
               })}
             </View>
           </View>
-          <View style={styles.filterCard}>
+              <View style={styles.filterCard}>
             <Text style={styles.filterLabel}>Bedrooms</Text>
             <View style={styles.filterChipRow}>
               {[null, 1, 2, 3, 4, 5].map((value) => {
@@ -1016,7 +1057,7 @@ export default function App() {
               })}
             </View>
           </View>
-          <View style={styles.filterCard}>
+              <View style={styles.filterCard}>
             <Text style={styles.filterLabel}>Bathrooms</Text>
             <View style={styles.filterChipRow}>
               {[null, 1, 2, 3, 4, 5].map((value) => {
@@ -1037,46 +1078,50 @@ export default function App() {
                 );
               })}
             </View>
+              </View>
+            </View>
+          </ScrollView>
+          <View style={styles.filterFooter}>
+            <Pressable
+              style={styles.primaryButton}
+              onPress={() => {
+                if (filterReturnTo === 'swipe' && activeFilterListId !== 'all') {
+                  setShowFilterPrompt(true);
+                  return;
+                }
+                const nextId = `custom-${Date.now()}`;
+                setAppliedFilterMin(filterMin);
+                setAppliedFilterMax(filterMax);
+                setAppliedFilterHomeTypes(filterHomeTypes);
+                setAppliedFilterBeds(filterBeds);
+                setAppliedFilterBaths(filterBaths);
+                if (filterReturnTo === 'swipe' && activeFilterListId === 'all') {
+                  setActiveFilterListId('all');
+                } else {
+                  setActiveFilterListId(nextId);
+                  setFilterLists((prev) => [
+                    ...prev,
+                    {
+                      id: nextId,
+                      min: filterMin,
+                      max: filterMax,
+                      homeTypes: filterHomeTypes,
+                      beds: filterBeds,
+                      baths: filterBaths,
+                      title: formatFilterTitle(filterMin, filterMax, filterHomeTypes, filterBeds, filterBaths),
+                    },
+                  ]);
+                }
+                setIndex(0);
+                setHistory([]);
+                position.setValue({ x: 0, y: 0 });
+                setFilterReturnTo(null);
+                setScreen('swipe');
+              }}
+            >
+              <Text style={styles.primaryButtonText}>Apply Filters</Text>
+            </Pressable>
           </View>
-          <Pressable
-            style={styles.primaryButton}
-            onPress={() => {
-              if (filterReturnTo === 'swipe' && activeFilterListId !== 'all') {
-                setShowFilterPrompt(true);
-                return;
-              }
-              const nextId = `custom-${Date.now()}`;
-              setAppliedFilterMin(filterMin);
-              setAppliedFilterMax(filterMax);
-              setAppliedFilterHomeTypes(filterHomeTypes);
-              setAppliedFilterBeds(filterBeds);
-              setAppliedFilterBaths(filterBaths);
-              if (filterReturnTo === 'swipe' && activeFilterListId === 'all') {
-                setActiveFilterListId('all');
-              } else {
-                setActiveFilterListId(nextId);
-                setFilterLists((prev) => [
-                  ...prev,
-                  {
-                    id: nextId,
-                    min: filterMin,
-                    max: filterMax,
-                    homeTypes: filterHomeTypes,
-                    beds: filterBeds,
-                    baths: filterBaths,
-                    title: formatFilterTitle(filterMin, filterMax, filterHomeTypes, filterBeds, filterBaths),
-                  },
-                ]);
-              }
-              setIndex(0);
-              setHistory([]);
-              position.setValue({ x: 0, y: 0 });
-              setFilterReturnTo(null);
-              setScreen('swipe');
-            }}
-          >
-            <Text style={styles.primaryButtonText}>Apply Filters</Text>
-          </Pressable>
         </View>
         <Modal
           transparent
@@ -1483,6 +1528,67 @@ export default function App() {
     );
   }
 
+  if (housesError) {
+    return (
+      <GestureHandlerRootView style={styles.root}>
+        <ScrollView
+          contentContainerStyle={[styles.container, styles.center]}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshingHouses}
+              onRefresh={() => loadHouses(true)}
+            />
+          }
+        >
+          <Pressable
+            style={styles.backButton}
+            onPress={() => setScreen('home')}
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </Pressable>
+          <Text style={styles.endText}>
+            Couldn't load houses. Pull to retry.
+          </Text>
+        </ScrollView>
+      </GestureHandlerRootView>
+    );
+  }
+
+  if (!isLoadingHouses && filteredHouses.length === 0 && houses.length > 0) {
+    return (
+      <GestureHandlerRootView style={styles.root}>
+        <View style={[styles.container, styles.center]}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => setScreen('home')}
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </Pressable>
+          <Text style={styles.endText}>
+            No houses in this range
+          </Text>
+          <Pressable
+            style={[styles.secondaryButton, styles.homeButton]}
+            onPress={() => {
+              setFilterMin(appliedFilterMin);
+              setFilterMax(appliedFilterMax);
+              setFilterMinInput(String(appliedFilterMin));
+              setFilterMaxInput(String(appliedFilterMax));
+              setFilterHomeTypes(appliedFilterHomeTypes);
+              setFilterBeds(appliedFilterBeds);
+              setFilterBaths(appliedFilterBaths);
+              setFilterReturnTo('swipe');
+              setShowFilterPrompt(false);
+              setScreen('filters');
+            }}
+          >
+            <Text style={styles.secondaryButtonText}>Modify Filters</Text>
+          </Pressable>
+        </View>
+      </GestureHandlerRootView>
+    );
+  }
+
   if (!swipeHouses.length || index >= swipeHouses.length) {
     return (
       <GestureHandlerRootView style={styles.root}>
@@ -1494,7 +1600,7 @@ export default function App() {
             <Text style={styles.backButtonText}>Back</Text>
           </Pressable>
           <Text style={styles.endText}>
-            you've reached the end
+            You've reached the end of this deck
           </Text>
         </View>
       </GestureHandlerRootView>
@@ -1632,33 +1738,35 @@ export default function App() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <View style={[styles.container, styles.swipeContainer]}>
-        <View style={styles.swipeHeader}>
-          <Pressable
-            style={styles.backButton}
-            onPress={() => setScreen('home')}
-          >
-            <Text style={styles.backButtonText}>Back</Text>
-          </Pressable>
-          <Text style={styles.swipeFilterLabel} numberOfLines={1}>
-            {activeListTitle}
-          </Text>
-          <Pressable
-            style={styles.filterButton}
-            onPress={() => {
-              setFilterMin(appliedFilterMin);
-              setFilterMax(appliedFilterMax);
-              setFilterMinInput(String(appliedFilterMin));
-              setFilterMaxInput(String(appliedFilterMax));
-              setFilterHomeTypes(appliedFilterHomeTypes);
-              setFilterBeds(appliedFilterBeds);
-              setFilterBaths(appliedFilterBaths);
-              setFilterReturnTo('swipe');
-              setShowFilterPrompt(false);
-              setScreen('filters');
-            }}
-          >
-            <Text style={styles.filterButtonText}>Filter</Text>
-          </Pressable>
+        <View style={styles.swipeHeaderContainer}>
+          <View style={styles.swipeHeader}>
+            <Pressable
+              style={[styles.backButton, styles.backButtonInline]}
+              onPress={() => setScreen('home')}
+            >
+              <Text style={styles.backButtonText}>Back</Text>
+            </Pressable>
+            <Text style={styles.swipeFilterLabel} numberOfLines={1}>
+              {activeListTitle}
+            </Text>
+            <Pressable
+              style={styles.filterButton}
+              onPress={() => {
+                setFilterMin(appliedFilterMin);
+                setFilterMax(appliedFilterMax);
+                setFilterMinInput(String(appliedFilterMin));
+                setFilterMaxInput(String(appliedFilterMax));
+                setFilterHomeTypes(appliedFilterHomeTypes);
+                setFilterBeds(appliedFilterBeds);
+                setFilterBaths(appliedFilterBaths);
+                setFilterReturnTo('swipe');
+                setShowFilterPrompt(false);
+                setScreen('filters');
+              }}
+            >
+              <Text style={styles.filterButtonText}>Filter</Text>
+            </Pressable>
+          </View>
         </View>
         <RNAnimated.View
           pointerEvents="none"
@@ -1891,9 +1999,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5d76e',
   },
   homeTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 24,
+    fontSize: 40,
+    color: '#1f2933',
+    marginBottom: 18,
+  },
+  homeTitlePoppins: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontWeight: '600',
+  },
+  homeTitleFallback: {
+    fontWeight: '700',
+  },
+  homeHeroImage: {
+    width: '60%',
+    maxWidth: 260,
+    aspectRatio: 1,
+    marginBottom: 32,
   },
   primaryButton: {
     width: '100%',
@@ -1930,6 +2051,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: '#f3f4f6',
   },
+  backButtonInline: {
+    marginBottom: 0,
+  },
   backButtonText: {
     color: '#111827',
     fontSize: 14,
@@ -1945,6 +2069,19 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
+  },
+  filterGroup: {
+    backgroundColor: '#eef2f7',
+    borderRadius: 18,
+    padding: 12,
+    marginBottom: 16,
+  },
+  filterScrollContent: {
+    paddingBottom: 24,
+  },
+  filterFooter: {
+    paddingTop: 12,
+    paddingBottom: 8,
   },
   filterLabel: {
     fontSize: 16,
@@ -2070,8 +2207,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
     gap: 8,
+  },
+  swipeHeaderContainer: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 16,
+    padding: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   swipeFilterLabel: {
     flex: 1,
@@ -2114,6 +2258,11 @@ const styles = StyleSheet.create({
   },
   listDropdownBody: {
     marginTop: 10,
+  },
+  listDropdownDivider: {
+    height: 1,
+    backgroundColor: '#e5e7eb',
+    marginVertical: 8,
   },
   listButton: {
     paddingVertical: 10,
