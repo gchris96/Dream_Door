@@ -47,6 +47,17 @@ export default function App() {
   const [filterMaxInput, setFilterMaxInput] = useState('10000000');
   const [appliedFilterMin, setAppliedFilterMin] = useState(0);
   const [appliedFilterMax, setAppliedFilterMax] = useState(10000000);
+  const [filterHomeTypes, setFilterHomeTypes] = useState([]);
+  const [appliedFilterHomeTypes, setAppliedFilterHomeTypes] = useState([]);
+  const [filterBeds, setFilterBeds] = useState(null);
+  const [filterBaths, setFilterBaths] = useState(null);
+  const [appliedFilterBeds, setAppliedFilterBeds] = useState(null);
+  const [appliedFilterBaths, setAppliedFilterBaths] = useState(null);
+  const [filterLists, setFilterLists] = useState([]);
+  const [activeFilterListId, setActiveFilterListId] = useState('all');
+  const [showLists, setShowLists] = useState(true);
+  const [filterReturnTo, setFilterReturnTo] = useState(null);
+  const [showFilterPrompt, setShowFilterPrompt] = useState(false);
   const [filterTrackWidth, setFilterTrackWidth] = useState(0);
 
   const position = useRef(new RNAnimated.ValueXY()).current;
@@ -94,13 +105,33 @@ export default function App() {
   const badgeFollow = RNAnimated.subtract(position.x, badgeDragX);
   const likeBadgeTranslate = RNAnimated.add(likeBadgeApproach, badgeFollow);
   const dislikeBadgeTranslate = RNAnimated.add(dislikeBadgeApproach, badgeFollow);
+  const homeTypeOptions = useMemo(() => {
+    const options = new Set();
+    houses.forEach((house) => {
+      if (house?.property_type) {
+        options.add(String(house.property_type));
+      }
+    });
+    return Array.from(options);
+  }, [houses]);
+
   const filteredHouses = useMemo(() => {
     return houses.filter((house) => {
       const price = typeof house.price === 'number' ? house.price : Number(house.price);
       if (Number.isNaN(price)) return false;
-      return price >= appliedFilterMin && price <= appliedFilterMax;
+      const bedsValue = typeof house.beds === 'number' ? house.beds : Number(house.beds);
+      const bathsValue = typeof house.baths === 'number' ? house.baths : Number(house.baths);
+      const bedsCount = Number.isNaN(bedsValue) ? 0 : bedsValue;
+      const bathsCount = Number.isNaN(bathsValue) ? 0 : bathsValue;
+      const matchesPrice = price >= appliedFilterMin && price <= appliedFilterMax;
+      const matchesType =
+        appliedFilterHomeTypes.length === 0 ||
+        appliedFilterHomeTypes.includes(String(house?.property_type));
+      const matchesBeds = appliedFilterBeds === null || bedsCount >= appliedFilterBeds;
+      const matchesBaths = appliedFilterBaths === null || bathsCount >= appliedFilterBaths;
+      return matchesPrice && matchesType && matchesBeds && matchesBaths;
     });
-  }, [houses, appliedFilterMin, appliedFilterMax]);
+  }, [houses, appliedFilterMin, appliedFilterMax, appliedFilterHomeTypes, appliedFilterBeds, appliedFilterBaths]);
   const swipeHouses = useMemo(
     () => filteredHouses.filter(house => !savedIds.has(house.id) || savedOverrideIds.has(house.id)),
     [filteredHouses, savedIds, savedOverrideIds]
@@ -255,6 +286,48 @@ export default function App() {
 
   const clampPrice = (value) => Math.min(PRICE_MAX, Math.max(PRICE_MIN, value));
   const formatPrice = (value) => `$${value.toLocaleString()}`;
+  const formatPriceCompact = (value) => {
+    if (value >= 1000000) {
+      const rounded = Math.round((value / 1000000) * 10) / 10;
+      return `$${rounded}m`;
+    }
+    if (value >= 1000) {
+      const rounded = Math.round(value / 1000);
+      return `$${rounded}k`;
+    }
+    return `$${value}`;
+  };
+  const formatFilterTitle = (min, max, homeTypes, beds, baths) => {
+    const maxLabel = max >= PRICE_MAX ? '$10M+' : formatPriceCompact(max);
+    const typeLabel = Array.isArray(homeTypes) && homeTypes.length
+      ? ` · ${homeTypes.length} types`
+      : '';
+    const bedsLabel = beds !== null ? ` · ${beds}+ bd` : '';
+    const bathsLabel = baths !== null ? ` · ${baths}+ ba` : '';
+    return `${formatPriceCompact(min)} - ${maxLabel}${typeLabel}${bedsLabel}${bathsLabel}`;
+  };
+  const toggleHomeType = (type) => {
+    setFilterHomeTypes((prev) => {
+      if (prev.includes(type)) {
+        return prev.filter((item) => item !== type);
+      }
+      return [...prev, type];
+    });
+  };
+  const ensureFilterList = (id, min, max, homeTypes, beds, baths) => {
+    if (!id || id === 'all') return null;
+    const title = formatFilterTitle(min, max, homeTypes, beds, baths);
+    setFilterLists((prev) => {
+      const exists = prev.some((item) => item.id === id);
+      if (exists) {
+        return prev.map((item) => (
+          item.id === id ? { ...item, min, max, homeTypes, beds, baths, title } : item
+        ));
+      }
+      return [...prev, { id, min, max, homeTypes, beds, baths, title }];
+    });
+    return id;
+  };
   const getStepForValue = (value) => {
     if (value > 5000000) return 1000000;
     if (value >= 1000000) return 250000;
@@ -709,23 +782,76 @@ export default function App() {
           onPress={() => {
             setAppliedFilterMin(PRICE_MIN);
             setAppliedFilterMax(PRICE_MAX);
+            setAppliedFilterHomeTypes([]);
+            setAppliedFilterBeds(null);
+            setAppliedFilterBaths(null);
             setFilterMin(PRICE_MIN);
             setFilterMax(PRICE_MAX);
+            setFilterHomeTypes([]);
+            setFilterBeds(null);
+            setFilterBaths(null);
             setFilterMinInput(String(PRICE_MIN));
             setFilterMaxInput(String(PRICE_MAX));
+            setActiveFilterListId('all');
             setScreen('swipe');
           }}
         >
           <Text style={styles.primaryButtonText}>Browse All Homes</Text>
         </Pressable>
-        <Pressable
-          style={[styles.secondaryButton, styles.homeButton]}
-          onPress={() => {
-            setScreen('filters');
-          }}
-        >
-          <Text style={styles.secondaryButtonText}>Filter Homes</Text>
-        </Pressable>
+        {filterLists.length === 0 ? (
+          <Pressable
+            style={[styles.secondaryButton, styles.homeButton, styles.listButton]}
+            onPress={() => {
+              setFilterReturnTo(null);
+              setScreen('filters');
+            }}
+          >
+            <Text style={styles.secondaryButtonText}>New List</Text>
+          </Pressable>
+        ) : (
+          <View style={styles.listDropdown}>
+            <Pressable
+              style={[styles.listDropdownHeader, styles.listButton]}
+              onPress={() => setShowLists(prev => !prev)}
+            >
+              <Text style={styles.listDropdownTitle}>Your Lists</Text>
+              <Text style={styles.listDropdownChevron}>{showLists ? '▲' : '▼'}</Text>
+            </Pressable>
+            {showLists && (
+              <View style={styles.listDropdownBody}>
+                <Pressable
+                  style={[styles.secondaryButton, styles.homeButton, styles.listButton]}
+                  onPress={() => {
+                    setFilterReturnTo(null);
+                    setScreen('filters');
+                  }}
+                >
+                  <Text style={styles.secondaryButtonText}>New List</Text>
+                </Pressable>
+                {filterLists.map((item) => (
+                  <Pressable
+                    key={item.id}
+                    style={[styles.secondaryButton, styles.homeButton, styles.listButton]}
+                    onPress={() => {
+                      setAppliedFilterMin(item.min);
+                      setAppliedFilterMax(item.max);
+                      setAppliedFilterHomeTypes(item.homeTypes || []);
+                      setAppliedFilterBeds(item.beds ?? null);
+                      setAppliedFilterBaths(item.baths ?? null);
+                      setActiveFilterListId(item.id);
+                      setIndex(0);
+                      setHistory([]);
+                      position.setValue({ x: 0, y: 0 });
+                      setScreen('swipe');
+                    }}
+                  >
+                    <Text style={styles.secondaryButtonText}>{item.title}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
         <Pressable
           style={[styles.secondaryButton, styles.homeButton]}
           onPress={() => {
@@ -765,7 +891,10 @@ export default function App() {
         <View style={styles.container}>
           <Pressable
             style={styles.backButton}
-            onPress={() => setScreen('home')}
+            onPress={() => {
+              setShowFilterPrompt(false);
+              setScreen(filterReturnTo || 'home');
+            }}
           >
             <Text style={styles.backButtonText}>Back</Text>
           </Pressable>
@@ -843,20 +972,184 @@ export default function App() {
               </View>
             </View>
           </View>
+          <View style={styles.filterCard}>
+            <Text style={styles.filterLabel}>Home Type</Text>
+            <View style={styles.filterChipRow}>
+              {homeTypeOptions.map((type) => {
+                const label = String(type).replace(/_/g, ' ');
+                const isActive = filterHomeTypes.includes(type);
+                return (
+                  <Pressable
+                    key={type}
+                    style={[styles.filterChip, isActive && styles.filterChipActive]}
+                    onPress={() => toggleHomeType(type)}
+                  >
+                    <Text
+                      style={[styles.filterChipText, isActive && styles.filterChipTextActive]}
+                    >
+                      {isActive ? '✓ ' : ''}{label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+          <View style={styles.filterCard}>
+            <Text style={styles.filterLabel}>Bedrooms</Text>
+            <View style={styles.filterChipRow}>
+              {[null, 1, 2, 3, 4, 5].map((value) => {
+                const isActive = filterBeds === value;
+                const label = value === null ? 'Any' : `${value}+`;
+                return (
+                  <Pressable
+                    key={`beds-${value ?? 'any'}`}
+                    style={[styles.filterChip, isActive && styles.filterChipActive]}
+                    onPress={() => setFilterBeds(value)}
+                  >
+                    <Text
+                      style={[styles.filterChipText, isActive && styles.filterChipTextActive]}
+                    >
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+          <View style={styles.filterCard}>
+            <Text style={styles.filterLabel}>Bathrooms</Text>
+            <View style={styles.filterChipRow}>
+              {[null, 1, 2, 3, 4, 5].map((value) => {
+                const isActive = filterBaths === value;
+                const label = value === null ? 'Any' : `${value}+`;
+                return (
+                  <Pressable
+                    key={`baths-${value ?? 'any'}`}
+                    style={[styles.filterChip, isActive && styles.filterChipActive]}
+                    onPress={() => setFilterBaths(value)}
+                  >
+                    <Text
+                      style={[styles.filterChipText, isActive && styles.filterChipTextActive]}
+                    >
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
           <Pressable
             style={styles.primaryButton}
             onPress={() => {
+              if (filterReturnTo === 'swipe' && activeFilterListId !== 'all') {
+                setShowFilterPrompt(true);
+                return;
+              }
+              const nextId = `custom-${Date.now()}`;
               setAppliedFilterMin(filterMin);
               setAppliedFilterMax(filterMax);
+              setAppliedFilterHomeTypes(filterHomeTypes);
+              setAppliedFilterBeds(filterBeds);
+              setAppliedFilterBaths(filterBaths);
+              if (filterReturnTo === 'swipe' && activeFilterListId === 'all') {
+                setActiveFilterListId('all');
+              } else {
+                setActiveFilterListId(nextId);
+                setFilterLists((prev) => [
+                  ...prev,
+                  {
+                    id: nextId,
+                    min: filterMin,
+                    max: filterMax,
+                    homeTypes: filterHomeTypes,
+                    beds: filterBeds,
+                    baths: filterBaths,
+                    title: formatFilterTitle(filterMin, filterMax, filterHomeTypes, filterBeds, filterBaths),
+                  },
+                ]);
+              }
               setIndex(0);
               setHistory([]);
               position.setValue({ x: 0, y: 0 });
+              setFilterReturnTo(null);
               setScreen('swipe');
             }}
           >
             <Text style={styles.primaryButtonText}>Apply Filters</Text>
           </Pressable>
         </View>
+        <Modal
+          transparent
+          animationType="fade"
+          visible={showFilterPrompt}
+          onRequestClose={() => setShowFilterPrompt(false)}
+        >
+          <Pressable
+            style={styles.filterPromptOverlay}
+            onPress={() => setShowFilterPrompt(false)}
+          >
+            <View style={styles.filterPromptCard}>
+              <Text style={styles.filterPromptText}>
+                Update current list or create a new one?
+              </Text>
+              <View style={styles.filterPromptActions}>
+                <Pressable
+                  style={[styles.secondaryButton, styles.listButton, styles.filterPromptButton]}
+                onPress={() => {
+                  setAppliedFilterMin(filterMin);
+                  setAppliedFilterMax(filterMax);
+                  setAppliedFilterHomeTypes(filterHomeTypes);
+                  setAppliedFilterBeds(filterBeds);
+                  setAppliedFilterBaths(filterBaths);
+                  ensureFilterList(activeFilterListId, filterMin, filterMax, filterHomeTypes, filterBeds, filterBaths);
+                  setShowFilterPrompt(false);
+                  setIndex(0);
+                  setHistory([]);
+                  position.setValue({ x: 0, y: 0 });
+                  setFilterReturnTo(null);
+                  runToastAnimation('List updated ✓');
+                  setScreen('swipe');
+                }}
+              >
+                <Text style={styles.secondaryButtonText}>Update</Text>
+              </Pressable>
+                <Pressable
+                  style={[styles.secondaryButton, styles.listButton, styles.filterPromptButton]}
+                onPress={() => {
+                  const nextId = `custom-${Date.now()}`;
+                  setAppliedFilterMin(filterMin);
+                  setAppliedFilterMax(filterMax);
+                  setAppliedFilterHomeTypes(filterHomeTypes);
+                  setAppliedFilterBeds(filterBeds);
+                  setAppliedFilterBaths(filterBaths);
+                  setActiveFilterListId(nextId);
+                  setFilterLists((prev) => [
+                    ...prev,
+                    {
+                      id: nextId,
+                      min: filterMin,
+                      max: filterMax,
+                      homeTypes: filterHomeTypes,
+                      beds: filterBeds,
+                      baths: filterBaths,
+                      title: formatFilterTitle(filterMin, filterMax, filterHomeTypes, filterBeds, filterBaths),
+                    },
+                  ]);
+                  setShowFilterPrompt(false);
+                  setIndex(0);
+                  setHistory([]);
+                  position.setValue({ x: 0, y: 0 });
+                  setFilterReturnTo(null);
+                  runToastAnimation('New list created!');
+                  setScreen('swipe');
+                }}
+              >
+                <Text style={styles.secondaryButtonText}>Create New</Text>
+              </Pressable>
+              </View>
+            </View>
+          </Pressable>
+        </Modal>
       </GestureHandlerRootView>
     );
   }
@@ -1331,16 +1624,42 @@ export default function App() {
 
   const currentMeta = getHouseMeta(currentHouse);
   const nextMeta = nextHouse ? getHouseMeta(nextHouse) : null;
+  const activeListTitle = activeFilterListId !== 'all'
+    ? (filterLists.find((item) => item.id === activeFilterListId)?.title ||
+        formatFilterTitle(appliedFilterMin, appliedFilterMax, appliedFilterHomeTypes, appliedFilterBeds, appliedFilterBaths))
+    : formatFilterTitle(appliedFilterMin, appliedFilterMax, appliedFilterHomeTypes, appliedFilterBeds, appliedFilterBaths);
 
   return (
     <GestureHandlerRootView style={styles.root}>
       <View style={[styles.container, styles.swipeContainer]}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => setScreen('home')}
-        >
-          <Text style={styles.backButtonText}>Back</Text>
-        </Pressable>
+        <View style={styles.swipeHeader}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => setScreen('home')}
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </Pressable>
+          <Text style={styles.swipeFilterLabel} numberOfLines={1}>
+            {activeListTitle}
+          </Text>
+          <Pressable
+            style={styles.filterButton}
+            onPress={() => {
+              setFilterMin(appliedFilterMin);
+              setFilterMax(appliedFilterMax);
+              setFilterMinInput(String(appliedFilterMin));
+              setFilterMaxInput(String(appliedFilterMax));
+              setFilterHomeTypes(appliedFilterHomeTypes);
+              setFilterBeds(appliedFilterBeds);
+              setFilterBaths(appliedFilterBaths);
+              setFilterReturnTo('swipe');
+              setShowFilterPrompt(false);
+              setScreen('filters');
+            }}
+          >
+            <Text style={styles.filterButtonText}>Filter</Text>
+          </Pressable>
+        </View>
         <RNAnimated.View
           pointerEvents="none"
           style={[
@@ -1694,6 +2013,111 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     fontSize: 14,
     color: '#111827',
+  },
+  filterChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
+  filterChip: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+  },
+  filterChipActive: {
+    borderColor: '#111827',
+    backgroundColor: '#111827',
+  },
+  filterChipText: {
+    fontSize: 13,
+    color: '#374151',
+    textTransform: 'capitalize',
+  },
+  filterChipTextActive: {
+    color: '#fff',
+  },
+  filterPromptOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  filterPromptCard: {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 18,
+    gap: 10,
+  },
+  filterPromptActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 6,
+  },
+  filterPromptButton: {
+    flex: 1,
+  },
+  filterPromptText: {
+    fontSize: 14,
+    color: '#374151',
+  },
+  swipeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
+  swipeFilterLabel: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#374151',
+  },
+  filterButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#111827',
+  },
+  filterButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  listDropdown: {
+    width: '100%',
+    marginBottom: 12,
+  },
+  listDropdownHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#e5e7eb',
+  },
+  listDropdownTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  listDropdownChevron: {
+    fontSize: 14,
+    color: '#111827',
+  },
+  listDropdownBody: {
+    marginTop: 10,
+  },
+  listButton: {
+    paddingVertical: 10,
+    borderRadius: 10,
   },
   card: {
     backgroundColor: '#d7d2ceff',
