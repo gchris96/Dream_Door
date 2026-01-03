@@ -18,7 +18,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
 
 export default function App() {
-  const API_BASE = 'https://<railway-backend-url>';
+  const API_BASE = 'https://dreamdoor-production.up.railway.app';
   const [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
   });
