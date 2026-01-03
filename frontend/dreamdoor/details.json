@@ -1,0 +1,3166 @@
+{
+  "data": {
+    "home": {
+      "__typename": "Home",
+      "property_id": "2132751461",
+      "last_update_date": "2025-12-29T18:11:58Z",
+      "last_price_change_date": null,
+      "last_price_change_amount": null,
+      "listing_id": "2989771880",
+      "status": "for_sale",
+      "href": "https://www.realtor.com/realestateandhomes-detail/4832-Rosewood-Ave-Apt-A_Los-Angeles_CA_90004_M21327-51461",
+      "days_on_market": null,
+      "list_date": "2025-12-30T02:22:26Z",
+      "create_date": "2025-12-30T02:22:26Z",
+      "mortgage": {
+        "__typename": "Mortgage",
+        "property_tax_rate": 0.0125,
+        "rates_url": "https://www.realtor.com/mortgage/rates/?from=mobile#zip=90004&property_price=3800000&mlid=2132751461",
+        "insurance_rate": 0.0033,
+        "estimate": {
+          "__typename": "MortgageEstimate",
+          "loan_amount": 3040000,
+          "monthly_payment": 23522,
+          "total_payment": 6666684,
+          "down_payment": 760000,
+          "average_rate": {
+            "__typename": "Rate",
+            "rate": 0.06149,
+            "loan_type": {
+              "__typename": "LoanType",
+              "term": 30
+            }
+          },
+          "monthly_payment_details": [
+            {
+              "__typename": "MonthlyOwnershipExpense",
+              "type": "principal_and_interest",
+              "amount": 18519,
+              "display_name": "Principal & interest"
+            },
+            {
+              "__typename": "MonthlyOwnershipExpense",
+              "type": "home_insurance",
+              "amount": 1045,
+              "display_name": "Home insurance"
+            },
+            {
+              "__typename": "MonthlyOwnershipExpense",
+              "type": "hoa_fees",
+              "amount": 0,
+              "display_name": "HOA fees"
+            },
+            {
+              "__typename": "MonthlyOwnershipExpense",
+              "type": "mortgage_insurance",
+              "amount": 0,
+              "display_name": "Mortgage insurance"
+            },
+            {
+              "__typename": "MonthlyOwnershipExpense",
+              "type": "property_tax",
+              "amount": 3958,
+              "display_name": "Property tax"
+            }
+          ]
+        },
+        "average_rates": [
+          {
+            "__typename": "Rate",
+            "loan_type": {
+              "__typename": "LoanType",
+              "loan_id": "thirty_year_fix"
+            },
+            "rate": 0.06149
+          },
+          {
+            "__typename": "Rate",
+            "loan_type": {
+              "__typename": "LoanType",
+              "loan_id": "twenty_year_fix"
+            },
+            "rate": 0.0589
+          },
+          {
+            "__typename": "Rate",
+            "loan_type": {
+              "__typename": "LoanType",
+              "loan_id": "fifteen_year_fix"
+            },
+            "rate": 0.05306
+          },
+          {
+            "__typename": "Rate",
+            "loan_type": {
+              "__typename": "LoanType",
+              "loan_id": "ten_year_fix"
+            },
+            "rate": 0.05166
+          },
+          {
+            "__typename": "Rate",
+            "loan_type": {
+              "__typename": "LoanType",
+              "loan_id": "thirty_year_fha"
+            },
+            "rate": 0.05596
+          },
+          {
+            "__typename": "Rate",
+            "loan_type": {
+              "__typename": "LoanType",
+              "loan_id": "thirty_year_va"
+            },
+            "rate": 0.057
+          },
+          {
+            "__typename": "Rate",
+            "loan_type": {
+              "__typename": "LoanType",
+              "loan_id": "five_one_arm"
+            },
+            "rate": 0.06005
+          },
+          {
+            "__typename": "Rate",
+            "loan_type": {
+              "__typename": "LoanType",
+              "loan_id": "seven_one_arm"
+            },
+            "rate": 0.05964
+          }
+        ]
+      },
+      "hoa": null,
+      "buyers": null,
+      "description": {
+        "__typename": "HomeDescription",
+        "baths_consolidated": "4",
+        "baths": 10,
+        "baths_min": null,
+        "baths_max": null,
+        "heating": null,
+        "cooling": null,
+        "beds": 16,
+        "beds_min": null,
+        "beds_max": null,
+        "garage": null,
+        "garage_min": null,
+        "garage_max": null,
+        "pool": null,
+        "sqft": 7946,
+        "sqft_min": null,
+        "sqft_max": null,
+        "styles": [
+          "art_moderne"
+        ],
+        "lot_sqft": 7257,
+        "units": 9,
+        "stories": 2,
+        "type": "multi_family",
+        "sub_type": null,
+        "text": "Excellent Investment Opportunity in Prime Hancock Park Wilshire in Los Angeles! Built in 1989, this well-maintained 9-unit apartment building features nicely renovated units and exterior, offering a true turnkey investment. No Rent Control of RSO, allowing for maximum rental flexibility and future upside. Located in a high-demand rental area with consistent occupancy, this property is ideal for investors seeking stable cash flow with long-term appreciation potential.",
+        "year_built": 1989,
+        "name": null
+      },
+      "pet_policy": null,
+      "assigned_schools": {
+        "__typename": "SchoolList",
+        "schools": [
+          {
+            "__typename": "School",
+            "district": {
+              "__typename": "SchoolDistrict",
+              "name": "Los Angeles Unified School District",
+              "id": "06151432641",
+              "phone": null,
+              "student_count": null,
+              "grades": null
+            }
+          },
+          {
+            "__typename": "School",
+            "district": {
+              "__typename": "SchoolDistrict",
+              "name": "Los Angeles Unified School District",
+              "id": "06151432641",
+              "phone": null,
+              "student_count": null,
+              "grades": null
+            }
+          },
+          {
+            "__typename": "School",
+            "district": {
+              "__typename": "SchoolDistrict",
+              "name": "Los Angeles Unified School District",
+              "id": "06151432641",
+              "phone": null,
+              "student_count": null,
+              "grades": null
+            }
+          }
+        ]
+      },
+      "nearby_schools": {
+        "__typename": "SchoolList",
+        "schools": [
+          {
+            "__typename": "School",
+            "assigned": true,
+            "coordinate": {
+              "__typename": "Coordinate",
+              "lat": 34.080403,
+              "lon": -118.31604
+            },
+            "distance_in_miles": 0.3,
+            "district": {
+              "__typename": "SchoolDistrict",
+              "id": "06151432641",
+              "name": "Los Angeles Unified School District"
+            },
+            "education_levels": [
+              "elementary"
+            ],
+            "funding_type": "public",
+            "grades": [
+              "K",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ],
+            "id": "078606351",
+            "name": "Van Ness Avenue Elementary School",
+            "parent_rating": 5,
+            "rating": 5,
+            "student_count": 176
+          },
+          {
+            "__typename": "School",
+            "assigned": true,
+            "coordinate": {
+              "__typename": "Coordinate",
+              "lat": 34.094823,
+              "lon": -118.317555
+            },
+            "distance_in_miles": 1.2,
+            "district": {
+              "__typename": "SchoolDistrict",
+              "id": "06151432641",
+              "name": "Los Angeles Unified School District"
+            },
+            "education_levels": [
+              "middle"
+            ],
+            "funding_type": "public",
+            "grades": [
+              "6",
+              "7",
+              "8"
+            ],
+            "id": "078602661",
+            "name": "Joseph Le Conte Middle School",
+            "parent_rating": 4,
+            "rating": 4,
+            "student_count": 659
+          },
+          {
+            "__typename": "School",
+            "assigned": true,
+            "coordinate": {
+              "__typename": "Coordinate",
+              "lat": 34.082739,
+              "lon": -118.359937
+            },
+            "distance_in_miles": 2.9,
+            "district": {
+              "__typename": "SchoolDistrict",
+              "id": "06151432641",
+              "name": "Los Angeles Unified School District"
+            },
+            "education_levels": [
+              "high"
+            ],
+            "funding_type": "public",
+            "grades": [
+              "9",
+              "10",
+              "11",
+              "12"
+            ],
+            "id": "078600951",
+            "name": "Fairfax Senior High School",
+            "parent_rating": 4,
+            "rating": 6,
+            "student_count": 1632
+          },
+          {
+            "__typename": "School",
+            "assigned": null,
+            "coordinate": {
+              "__typename": "Coordinate",
+              "lat": 34.076012,
+              "lon": -118.306351
+            },
+            "distance_in_miles": 0.3,
+            "district": {
+              "__typename": "SchoolDistrict",
+              "id": "06151428551",
+              "name": null
+            },
+            "education_levels": [
+              "elementary"
+            ],
+            "funding_type": "private",
+            "grades": [
+              "K"
+            ],
+            "id": "078760001",
+            "name": "Beverly Christian Academy, Inc.",
+            "parent_rating": null,
+            "rating": null,
+            "student_count": 32
+          },
+          {
+            "__typename": "School",
+            "assigned": null,
+            "coordinate": {
+              "__typename": "Coordinate",
+              "lat": 34.077144,
+              "lon": -118.304221
+            },
+            "distance_in_miles": 0.4,
+            "district": {
+              "__typename": "SchoolDistrict",
+              "id": "06151432641",
+              "name": "Los Angeles Unified School District"
+            },
+            "education_levels": [
+              "elementary"
+            ],
+            "funding_type": "public",
+            "grades": [
+              "K",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ],
+            "id": "078777611",
+            "name": "Harvard Elementary School",
+            "parent_rating": 3,
+            "rating": 6,
+            "student_count": 264
+          },
+          {
+            "__typename": "School",
+            "assigned": null,
+            "coordinate": {
+              "__typename": "Coordinate",
+              "lat": 34.072025,
+              "lon": -118.307526
+            },
+            "distance_in_miles": 0.5,
+            "district": {
+              "__typename": "SchoolDistrict",
+              "id": "06151428551",
+              "name": null
+            },
+            "education_levels": [
+              "elementary"
+            ],
+            "funding_type": "private",
+            "grades": [
+              "K",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6"
+            ],
+            "id": "079008811",
+            "name": "Enopi Academy",
+            "parent_rating": null,
+            "rating": null,
+            "student_count": null
+          },
+          {
+            "__typename": "School",
+            "assigned": null,
+            "coordinate": {
+              "__typename": "Coordinate",
+              "lat": 34.070324,
+              "lon": -118.308209
+            },
+            "distance_in_miles": 0.6,
+            "district": {
+              "__typename": "SchoolDistrict",
+              "id": "06151432641",
+              "name": "Los Angeles Unified School District"
+            },
+            "education_levels": [
+              "elementary"
+            ],
+            "funding_type": "public",
+            "grades": [
+              "K",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ],
+            "id": "078814721",
+            "name": "Charles H. Kim Elementary School",
+            "parent_rating": 4,
+            "rating": 8,
+            "student_count": 467
+          },
+          {
+            "__typename": "School",
+            "assigned": null,
+            "coordinate": {
+              "__typename": "Coordinate",
+              "lat": 34.069388,
+              "lon": -118.30954
+            },
+            "distance_in_miles": 0.7,
+            "district": {
+              "__typename": "SchoolDistrict",
+              "id": "06151428551",
+              "name": null
+            },
+            "education_levels": [
+              "elementary",
+              "middle"
+            ],
+            "funding_type": "private",
+            "grades": [
+              "K",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8"
+            ],
+            "id": "078723641",
+            "name": "St. Brendan",
+            "parent_rating": 4,
+            "rating": null,
+            "student_count": 303
+          },
+          {
+            "__typename": "School",
+            "assigned": null,
+            "coordinate": {
+              "__typename": "Coordinate",
+              "lat": 34.094949,
+              "lon": -118.315076
+            },
+            "distance_in_miles": 1.1,
+            "district": {
+              "__typename": "SchoolDistrict",
+              "id": "06151432641",
+              "name": "Los Angeles Unified School District"
+            },
+            "education_levels": [
+              "middle",
+              "high"
+            ],
+            "funding_type": "public",
+            "grades": [
+              "7",
+              "8",
+              "9",
+              "10",
+              "11",
+              "12"
+            ],
+            "id": "078775911",
+            "name": "Richard A. Alonzo Community Day School",
+            "parent_rating": 5,
+            "rating": 2,
+            "student_count": 59
+          },
+          {
+            "__typename": "School",
+            "assigned": null,
+            "coordinate": {
+              "__typename": "Coordinate",
+              "lat": 34.095494,
+              "lon": -118.313925
+            },
+            "distance_in_miles": 1.2,
+            "district": {
+              "__typename": "SchoolDistrict",
+              "id": "06151432641",
+              "name": "Los Angeles Unified School District"
+            },
+            "education_levels": [
+              "middle",
+              "high"
+            ],
+            "funding_type": "public",
+            "grades": [
+              "7",
+              "8",
+              "9",
+              "10",
+              "11",
+              "12"
+            ],
+            "id": "078924351",
+            "name": "Apex Academy",
+            "parent_rating": 4,
+            "rating": 1,
+            "student_count": 281
+          }
+        ]
+      },
+      "schools": {
+        "__typename": "SchoolList",
+        "schools": [
+          {
+            "__typename": "School",
+            "assigned": true,
+            "coordinate": {
+              "__typename": "Coordinate",
+              "lat": 34.080403,
+              "lon": -118.31604
+            },
+            "distance_in_miles": 0.3,
+            "district": {
+              "__typename": "SchoolDistrict",
+              "id": "06151432641",
+              "name": "Los Angeles Unified School District"
+            },
+            "education_levels": [
+              "elementary"
+            ],
+            "funding_type": "public",
+            "grades": [
+              "K",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ],
+            "id": "078606351",
+            "name": "Van Ness Avenue Elementary School",
+            "parent_rating": 5,
+            "rating": 5,
+            "student_count": 176
+          },
+          {
+            "__typename": "School",
+            "assigned": true,
+            "coordinate": {
+              "__typename": "Coordinate",
+              "lat": 34.094823,
+              "lon": -118.317555
+            },
+            "distance_in_miles": 1.2,
+            "district": {
+              "__typename": "SchoolDistrict",
+              "id": "06151432641",
+              "name": "Los Angeles Unified School District"
+            },
+            "education_levels": [
+              "middle"
+            ],
+            "funding_type": "public",
+            "grades": [
+              "6",
+              "7",
+              "8"
+            ],
+            "id": "078602661",
+            "name": "Joseph Le Conte Middle School",
+            "parent_rating": 4,
+            "rating": 4,
+            "student_count": 659
+          },
+          {
+            "__typename": "School",
+            "assigned": true,
+            "coordinate": {
+              "__typename": "Coordinate",
+              "lat": 34.082739,
+              "lon": -118.359937
+            },
+            "distance_in_miles": 2.9,
+            "district": {
+              "__typename": "SchoolDistrict",
+              "id": "06151432641",
+              "name": "Los Angeles Unified School District"
+            },
+            "education_levels": [
+              "high"
+            ],
+            "funding_type": "public",
+            "grades": [
+              "9",
+              "10",
+              "11",
+              "12"
+            ],
+            "id": "078600951",
+            "name": "Fairfax Senior High School",
+            "parent_rating": 4,
+            "rating": 6,
+            "student_count": 1632
+          },
+          {
+            "__typename": "School",
+            "assigned": null,
+            "coordinate": {
+              "__typename": "Coordinate",
+              "lat": 34.076012,
+              "lon": -118.306351
+            },
+            "distance_in_miles": 0.3,
+            "district": {
+              "__typename": "SchoolDistrict",
+              "id": "06151428551",
+              "name": null
+            },
+            "education_levels": [
+              "elementary"
+            ],
+            "funding_type": "private",
+            "grades": [
+              "K"
+            ],
+            "id": "078760001",
+            "name": "Beverly Christian Academy, Inc.",
+            "parent_rating": null,
+            "rating": null,
+            "student_count": 32
+          }
+        ]
+      },
+      "products": {
+        "__typename": "ProductSummary",
+        "products": [
+          "co_broke"
+        ]
+      },
+      "list_price": 3800000,
+      "list_price_min": null,
+      "list_price_max": null,
+      "price_per_sqft": 478,
+      "community": null,
+      "lead_attributes": {
+        "__typename": "LeadAttributes",
+        "opcity_lead_attributes": {
+          "__typename": "OpCityLeadAttributes",
+          "flip_the_market_enabled": true,
+          "cashback_enabled": false,
+          "phones": [
+            {
+              "__typename": "OpCityLocalPhone",
+              "number": "(323)366-4648",
+              "category": "comm_console"
+            },
+            {
+              "__typename": "OpCityLocalPhone",
+              "number": "(323)366-4648",
+              "category": "schedule_tour"
+            }
+          ],
+          "local_phone": "(323)366-4648"
+        },
+        "ready_connect_mortgage": {
+          "__typename": "ReadyConnectMortgage",
+          "show_contact_a_lender": false,
+          "show_veterans_united": false
+        },
+        "show_contact_an_agent": true,
+        "lead_type": "co_broke",
+        "show_lead_form": true,
+        "disclaimer_text": null,
+        "is_tcpa_message_enabled": null,
+        "show_text_leads": true
+      },
+      "flags": {
+        "__typename": "HomeFlags",
+        "is_contingent": null,
+        "is_garage_present": null,
+        "is_new_construction": null,
+        "is_pending": null,
+        "is_short_sale": null,
+        "is_foreclosure": null,
+        "is_senior_community": null,
+        "is_for_rent": null,
+        "is_deal_available": null,
+        "is_price_excludes_land": null,
+        "is_promotion_present": null,
+        "is_subdivision": null,
+        "is_plan": null,
+        "is_price_reduced": null,
+        "is_new_listing": true,
+        "is_coming_soon": null
+      },
+      "provider_url": null,
+      "source": {
+        "__typename": "MlsSource",
+        "id": "WECA",
+        "disclaimer": {
+          "__typename": "MlsDisclaimer",
+          "text": "©1995-2025 The MLS™ All rights reserved.",
+          "href": null
+        },
+        "listing_id": "25631269",
+        "plan_id": null,
+        "spec_id": null,
+        "community_id": null,
+        "name": "TheMLSCLAW",
+        "type": "mls",
+        "raw": {
+          "__typename": "MlsRawData",
+          "style": "Modern",
+          "tax_amount": null
+        }
+      },
+      "details": [
+        {
+          "__typename": "HomeDetails",
+          "category": "Bedrooms",
+          "text": [
+            "Bedrooms: 16"
+          ]
+        },
+        {
+          "__typename": "HomeDetails",
+          "category": "Bathrooms",
+          "text": [
+            "Total Bathrooms: 10",
+            "Full Bathrooms: 4"
+          ]
+        },
+        {
+          "__typename": "HomeDetails",
+          "category": "Appliances",
+          "text": [
+            "Cooktop - Gas",
+            "Oven-Gas",
+            "Gas",
+            "Range Hood",
+            "Laundry Features: Community"
+          ]
+        },
+        {
+          "__typename": "HomeDetails",
+          "category": "Heating and Cooling",
+          "text": [
+            "Cooling Features: Central",
+            "Heating Features: Central",
+            "Heating: Yes",
+            "Water Heaters: Water Heater Unit"
+          ]
+        },
+        {
+          "__typename": "HomeDetails",
+          "category": "Interior Features",
+          "text": [
+            "Window Features: Double Pane Windows, Window Blinds, Vertical Blinds"
+          ]
+        },
+        {
+          "__typename": "HomeDetails",
+          "category": "Land Info",
+          "text": [
+            "Lot Size Acres: 0.1666",
+            "Lot Size Source: Vendor Enhanced",
+            "Lot Size Square Feet: 7258"
+          ]
+        },
+        {
+          "__typename": "HomeDetails",
+          "category": "Garage and Parking",
+          "text": [
+            "Parking Features: Gated",
+            "Parking Total: 16"
+          ]
+        },
+        {
+          "__typename": "HomeDetails",
+          "category": "Multi-Unit Info",
+          "text": [
+            "Number of Buildings: 1",
+            "Number of Units: 9",
+            "Unit Type: Attached",
+            "Bedrooms in Unit-1: 1",
+            "Bedrooms in Unit-2: 2",
+            "Bedrooms in Unit-3: 2",
+            "Total Bathrooms in Unit-1: 1",
+            "Total Bathrooms in Unit-2: 1",
+            "Total Bathrooms in Unit-3: 2",
+            "Full Bathrooms in Unit-1: 1",
+            "Full Bathrooms in Unit-2: 1",
+            "Full Bathrooms in Unit-3: 2",
+            "Unit 1 Total Actual Rent: 2050",
+            "Unit 2 Total Actual Rent: 2500",
+            "Unit 3 Total Actual Rent: 3600"
+          ]
+        },
+        {
+          "__typename": "HomeDetails",
+          "category": "Rental Info",
+          "text": [
+            "Gross Income: 255200",
+            "Gross Scheduled Income: 255200",
+            "Tenant Pays: Gas, Electric",
+            "Vacancy Allowance: 3802"
+          ]
+        },
+        {
+          "__typename": "HomeDetails",
+          "category": "Homeowners Association",
+          "text": [
+            "Gardener Expense: 150",
+            "Maintenance Expense: 4000"
+          ]
+        },
+        {
+          "__typename": "HomeDetails",
+          "category": "Other Property Info",
+          "text": [
+            "Source Listing Status: Active",
+            "County: Los Angeles",
+            "Directions: On the Rosewood Ave between S. Western Ave and S. St. Andrews Pl.",
+            "Source Property Type: Residential Income",
+            "Insurance Expense: 6365",
+            "Area: Hancock Park-Wilshire",
+            "Source Neighborhood: Hancock Park-Wilshire",
+            "New Taxes Expense: 44460",
+            "Owner Pays: Water, Gardener",
+            "Parcel Number: 5522-019-019",
+            "Trash Expense: 10800",
+            "Zoning: LAR3"
+          ]
+        },
+        {
+          "__typename": "HomeDetails",
+          "category": "Commercial Info",
+          "text": [
+            "Net Operating Income: 178655",
+            "Operating Expense: 77425"
+          ]
+        },
+        {
+          "__typename": "HomeDetails",
+          "category": "Building and Construction",
+          "text": [
+            "Total Square Feet Living: 7946",
+            "Year Built: 1989",
+            "Building Exterior Type: Stucco",
+            "Entry Location: Ground Level w/steps",
+            "Foundation Details: Concrete Block",
+            "Levels: Two Level",
+            "Living Area Source: Vendor Enhanced",
+            "Property Age: 36",
+            "Property Condition: Updated/Remodeled",
+            "Roof: Flat, Metal",
+            "Levels or Stories: 0",
+            "House Style: Modern",
+            "Year Built Source: Vendor Enhanced"
+          ]
+        },
+        {
+          "__typename": "HomeDetails",
+          "category": "Utilities",
+          "text": [
+            "Electric Expense: 1200",
+            "Sewer: In Street",
+            "Water Source: Public"
+          ]
+        },
+        {
+          "__typename": "HomeDetails",
+          "category": "Accessibility Features",
+          "text": [
+            "Disabled Access: No"
+          ]
+        },
+        {
+          "__typename": "HomeDetails",
+          "category": "Home Features",
+          "text": [
+            "Other Equipment: Dishwasher, Garbage Disposal, Range/Oven",
+            "Security Features: Automatic Gate, Carbon Monoxide Detector(s), Fire and Smoke Detection System, Gated"
+          ]
+        }
+      ],
+      "open_houses": null,
+      "tax_history": [
+        {
+          "__typename": "TaxHistory",
+          "tax": 37939,
+          "year": 2024,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 937439,
+            "land": 2175344,
+            "total": 3112783
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 37216,
+          "year": 2023,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 901038,
+            "land": 2090874,
+            "total": 2991912
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 35511,
+          "year": 2022,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 883371,
+            "land": 2049877,
+            "total": 2933248
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 35056,
+          "year": 2021,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 866050,
+            "land": 2009684,
+            "total": 2875734
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 35411,
+          "year": 2020,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 857170,
+            "land": 1989078,
+            "total": 2846248
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 34020,
+          "year": 2019,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 840363,
+            "land": 1950077,
+            "total": 2790440
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 33842,
+          "year": 2018,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 823886,
+            "land": 1911841,
+            "total": 2735727
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 33074,
+          "year": 2017,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 807732,
+            "land": 1874354,
+            "total": 2682086
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 32296,
+          "year": 2016,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 791895,
+            "land": 1837602,
+            "total": 2629497
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 31830,
+          "year": 2015,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 780000,
+            "land": 1810000,
+            "total": 2590000
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 23047,
+          "year": 2014,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 692284,
+            "land": 1114793,
+            "total": 1807077
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 23032,
+          "year": 2013,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 689156,
+            "land": 1109755,
+            "total": 1798911
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 20381,
+          "year": 2012,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 535000,
+            "land": 995000,
+            "total": 1530000
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 22763,
+          "year": 2010,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 534400,
+            "land": 860600,
+            "total": 1395000
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 21937,
+          "year": 2009,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 657447,
+            "land": 1058692,
+            "total": 1716139
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 21009,
+          "year": 2008,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 646088,
+            "land": 1040400,
+            "total": 1686488
+          }
+        },
+        {
+          "__typename": "TaxHistory",
+          "tax": 20313,
+          "year": 2007,
+          "assessment": {
+            "__typename": "Assessment",
+            "building": 633420,
+            "land": 1020000,
+            "total": 1653420
+          }
+        }
+      ],
+      "location": {
+        "__typename": "HomeLocation",
+        "address": {
+          "__typename": "HomeAddress",
+          "line": "4832 Rosewood Ave",
+          "street_number": "4832",
+          "street_name": "Rosewood",
+          "street_suffix": "Ave",
+          "unit": null,
+          "city": "Los Angeles",
+          "state_code": "CA",
+          "postal_code": "90004",
+          "state": "California",
+          "coordinate": {
+            "__typename": "HomeCoordinate",
+            "lat": 34.078999,
+            "lon": -118.310365
+          }
+        },
+        "county": {
+          "__typename": "HomeCounty",
+          "fips_code": "06037"
+        },
+        "street_view_url": "https://maps.googleapis.com/maps/api/streetview?channel=rdc-streetview&client=gme-movesalesinc&location=4832%20Rosewood%20Ave%2C%20Los%20Angeles%2C%20CA%2090004&size=640x480&source=outdoor&signature=h2f5esgGHAC8Bokfy4Z-NigpC3M=",
+        "neighborhoods": [
+          {
+            "__typename": "Neighborhood",
+            "name": "Greater Wilshire",
+            "city": "Los Angeles",
+            "level": "neighborhood",
+            "geo_statistics": {
+              "__typename": "GeoStatistics",
+              "housing_market": {
+                "__typename": "HousingMarket",
+                "median_price_per_sqft": 735,
+                "median_sold_price": 1210000,
+                "median_listing_price": 2190000,
+                "median_days_on_market": 68
+              }
+            }
+          },
+          {
+            "__typename": "Neighborhood",
+            "name": "Central LA",
+            "city": "Los Angeles",
+            "level": "macro_neighborhood",
+            "geo_statistics": {
+              "__typename": "GeoStatistics",
+              "housing_market": {
+                "__typename": "HousingMarket",
+                "median_price_per_sqft": 731,
+                "median_sold_price": 1372500,
+                "median_listing_price": 1495000,
+                "median_days_on_market": 74
+              }
+            }
+          },
+          {
+            "__typename": "Neighborhood",
+            "name": "Larchmont",
+            "city": "Los Angeles",
+            "level": "sub_neighborhood",
+            "geo_statistics": {
+              "__typename": "GeoStatistics",
+              "housing_market": {
+                "__typename": "HousingMarket",
+                "median_price_per_sqft": 835,
+                "median_sold_price": 2692500,
+                "median_listing_price": 2222000,
+                "median_days_on_market": 63
+              }
+            }
+          }
+        ]
+      },
+      "branding": [
+        {
+          "__typename": "Branding",
+          "type": "Agent",
+          "photo": null,
+          "name": "Thomas Yong Kim",
+          "phone": null,
+          "slogan": null,
+          "accent_color": null,
+          "link": null
+        },
+        {
+          "__typename": "Branding",
+          "type": "Office",
+          "photo": null,
+          "name": "Apple Tree Realty",
+          "phone": null,
+          "slogan": null,
+          "accent_color": null,
+          "link": null
+        }
+      ],
+      "consumer_advertisers": [
+        {
+          "__typename": "ConsumerAdvertiser",
+          "advertiser_id": "",
+          "office_id": null,
+          "agent_id": null,
+          "name": "Thomas Yong Kim",
+          "phone": null,
+          "type": "Agent",
+          "href": null,
+          "slogan": null,
+          "photo": {
+            "__typename": "Photo",
+            "href": null
+          },
+          "show_realtor_logo": false,
+          "hours": null
+        },
+        {
+          "__typename": "ConsumerAdvertiser",
+          "advertiser_id": "",
+          "office_id": null,
+          "agent_id": null,
+          "name": "Apple Tree Realty",
+          "phone": "(213) 465-4858",
+          "type": "Office",
+          "href": null,
+          "slogan": null,
+          "photo": {
+            "__typename": "Photo",
+            "href": null
+          },
+          "show_realtor_logo": false,
+          "hours": null
+        }
+      ],
+      "advertisers": [
+        {
+          "__typename": "HomeAdvertiser",
+          "fulfillment_id": "0",
+          "name": "Thomas Yong Kim",
+          "type": "seller",
+          "team_name": null,
+          "email": "tkim.appletree@gmail.com",
+          "href": null,
+          "state_license": "01934789",
+          "phones": [
+            {
+              "__typename": "AdvertiserPhone",
+              "number": "2132227574",
+              "type": "Mobile",
+              "ext": null
+            }
+          ],
+          "office": {
+            "__typename": "HomeAdvertiserOffice",
+            "fulfillment_id": "0",
+            "name": "Apple Tree Realty",
+            "href": null,
+            "photo": null,
+            "email": null,
+            "phones": [
+              {
+                "__typename": "AdvertiserPhone",
+                "number": "(213) 465-4858",
+                "type": "Office",
+                "ext": null
+              }
+            ]
+          },
+          "broker": null,
+          "photo": null
+        }
+      ],
+      "photo_count": 24,
+      "photos": [
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m187690337s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "house_view",
+              "probability": 0.9019243717193604
+            },
+            {
+              "__typename": "Tag",
+              "label": "porch",
+              "probability": 0.7332658767700195
+            },
+            {
+              "__typename": "Tag",
+              "label": "house_view",
+              "probability": 0.9926757216453552
+            },
+            {
+              "__typename": "Tag",
+              "label": "house_view",
+              "probability": 0.9810953140258789
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m177612668s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "house_view",
+              "probability": 0.8481711149215698
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m786215731s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "unknown",
+              "probability": 0.7674713730812073
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m1063945340s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "house_view",
+              "probability": 0.8723351955413818
+            },
+            {
+              "__typename": "Tag",
+              "label": "porch",
+              "probability": 0.6311571002006531
+            },
+            {
+              "__typename": "Tag",
+              "label": "porch",
+              "probability": 0.9780289530754089
+            },
+            {
+              "__typename": "Tag",
+              "label": "house_view",
+              "probability": 0.9291264414787292
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m137165989s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "kitchen",
+              "probability": 0.9992458820343018
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m945924693s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "kitchen",
+              "probability": 0.9999991655349731
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m3995081969s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "laundry_room",
+              "probability": 0.8788006901741028
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m2666040817s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "kitchen",
+              "probability": 0.9999964237213135
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m1592773589s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "unknown",
+              "probability": 0.9999943971633911
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m416409651s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "unknown",
+              "probability": 0.9961581826210022
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m2859331189s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "unknown",
+              "probability": 0.5854249596595764
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m900559294s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "unknown",
+              "probability": 0.5434083938598633
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m1891644097s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "bathroom",
+              "probability": 0.9999194145202637
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m1504542739s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "unknown",
+              "probability": 0.9999693632125854
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m3816846613s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "unknown",
+              "probability": 0.9999986886978149
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m3527455291s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "unknown",
+              "probability": 0.9434019923210144
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m996865626s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "bathroom",
+              "probability": 0.9999986886978149
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m1957724840s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "laundry_room",
+              "probability": 0.9999943971633911
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m2568886503s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "unknown",
+              "probability": 0.9998799562454224
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m4040049642s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "unknown",
+              "probability": 0.999993085861206
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m349670770s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "unknown",
+              "probability": 0.9987605810165405
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m3703693556s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "unknown",
+              "probability": 0.9992584586143494
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m914660381s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "unknown",
+              "probability": 0.8412467241287231
+            }
+          ]
+        },
+        {
+          "__typename": "HomePhoto",
+          "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m2405923184s.jpg",
+          "type": "realtordotcom_mls_listing_image",
+          "tags": [
+            {
+              "__typename": "Tag",
+              "label": "bathroom",
+              "probability": 1
+            }
+          ]
+        }
+      ],
+      "property_history": [
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2025-12-30",
+          "event_name": "Listed",
+          "price": 3800000,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/f4d43bbe79401fd0ff72a330b336c7a1l-m187690337s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9019243717193604
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "porch",
+                    "probability": 0.7332658767700195
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9926757216453552
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9810953140258789
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2025-11-28",
+          "event_name": "Listing removed",
+          "price": 3500,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/2f281019fdfef14c649b45834126f8fcl-m187690337s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9019243717193604
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "porch",
+                    "probability": 0.7332658767700195
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9926757216453552
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9810953140258789
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2025-10-03",
+          "event_name": "Listing removed",
+          "price": 0,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/bf3e610e252f09e6a3551448730d708el-m187690337s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9019243717193604
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "porch",
+                    "probability": 0.7332658767700195
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9926757216453552
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9810953140258789
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2025-10-02",
+          "event_name": "Listed for rent",
+          "price": 2695,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/bf3e610e252f09e6a3551448730d708el-m187690337s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9019243717193604
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "porch",
+                    "probability": 0.7332658767700195
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9926757216453552
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9810953140258789
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2025-09-30",
+          "event_name": "Price Changed for rent",
+          "price": 3500,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/2f281019fdfef14c649b45834126f8fcl-m187690337s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9019243717193604
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "porch",
+                    "probability": 0.7332658767700195
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9926757216453552
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9810953140258789
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2025-09-03",
+          "event_name": "Listing removed",
+          "price": 0,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/bf3e610e252f09e6a3551448730d708el-m187690337s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9019243717193604
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "porch",
+                    "probability": 0.7332658767700195
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9926757216453552
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9810953140258789
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2025-08-20",
+          "event_name": "Listed for rent",
+          "price": 2695,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/bf3e610e252f09e6a3551448730d708el-m187690337s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9019243717193604
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "porch",
+                    "probability": 0.7332658767700195
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9926757216453552
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9810953140258789
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2025-08-20",
+          "event_name": "Listed for rent",
+          "price": 3850,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/2f281019fdfef14c649b45834126f8fcl-m187690337s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9019243717193604
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "porch",
+                    "probability": 0.7332658767700195
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9926757216453552
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9810953140258789
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2024-06-26",
+          "event_name": "Listing removed",
+          "price": 2350,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/e7cff3b73c39643e977471aa501a040fl-m2719446901s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.920906662940979
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9977588653564453
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9904500842094421
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2024-05-23",
+          "event_name": "Price Changed for rent",
+          "price": 2350,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/e7cff3b73c39643e977471aa501a040fl-m2719446901s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.920906662940979
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9977588653564453
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9904500842094421
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2024-04-17",
+          "event_name": "Listed for rent",
+          "price": 2500,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/e7cff3b73c39643e977471aa501a040fl-m2719446901s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.920906662940979
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9977588653564453
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9904500842094421
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2024-01-25",
+          "event_name": "Listing removed",
+          "price": 3650,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/7e13bad25658144956108f4d94c2cbbcl-m187690337s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": null
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2024-01-06",
+          "event_name": "Listing removed",
+          "price": 0,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/a168642413879551e7942878f78ba521l-m1209953077s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "living_room",
+                    "probability": 0.9999994039535522
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 850
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2023-12-19",
+          "event_name": "Listing removed",
+          "price": 0,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/7f0845c6342c388b96da5dc77e5cd17fl-m1783349000s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.939797580242157
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9906634092330933
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.6433535218238831
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 850
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2023-12-18",
+          "event_name": "Listed for rent",
+          "price": 3995,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/a168642413879551e7942878f78ba521l-m1209953077s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "living_room",
+                    "probability": 0.9999994039535522
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 850
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2023-12-15",
+          "event_name": "Price Changed for rent",
+          "price": 2650,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/7f0845c6342c388b96da5dc77e5cd17fl-m1783349000s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.939797580242157
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9906634092330933
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.6433535218238831
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 850
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2023-11-21",
+          "event_name": "Listed for rent",
+          "price": 2500,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/7f0845c6342c388b96da5dc77e5cd17fl-m1783349000s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.939797580242157
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9906634092330933
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.6433535218238831
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 850
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2023-11-15",
+          "event_name": "Listing removed",
+          "price": 2695,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/7f0845c6342c388b96da5dc77e5cd17fl-m1783349000s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.939797580242157
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9906634092330933
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.6433535218238831
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 850
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2023-10-30",
+          "event_name": "Price Changed for rent",
+          "price": 2695,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/7f0845c6342c388b96da5dc77e5cd17fl-m1783349000s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.939797580242157
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9906634092330933
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.6433535218238831
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 850
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2023-10-20",
+          "event_name": "Listed for rent",
+          "price": 2800,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/7f0845c6342c388b96da5dc77e5cd17fl-m1783349000s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.939797580242157
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9906634092330933
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.6433535218238831
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 850
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2023-10-13",
+          "event_name": "Listing removed",
+          "price": 0,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/e5defb8ce0fe306a2f7492c201e12825l-m245700876s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9220488667488098
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "road_view",
+                    "probability": 0.4880456030368805
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9914444088935852
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.8947048783302307
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 880
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2023-10-10",
+          "event_name": "Price Changed for rent",
+          "price": 2500,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/e5defb8ce0fe306a2f7492c201e12825l-m245700876s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9220488667488098
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "road_view",
+                    "probability": 0.4880456030368805
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9914444088935852
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.8947048783302307
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 880
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2023-09-09",
+          "event_name": "Price Changed for rent",
+          "price": 2700,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/e5defb8ce0fe306a2f7492c201e12825l-m245700876s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9220488667488098
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "road_view",
+                    "probability": 0.4880456030368805
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9914444088935852
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.8947048783302307
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 880
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2023-09-08",
+          "event_name": "Price Changed for rent",
+          "price": 2550,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/e5defb8ce0fe306a2f7492c201e12825l-m245700876s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9220488667488098
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "road_view",
+                    "probability": 0.4880456030368805
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9914444088935852
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.8947048783302307
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 880
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2023-08-28",
+          "event_name": "Listed for rent",
+          "price": 2700,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://ap.rdcpix.com/e5defb8ce0fe306a2f7492c201e12825l-m245700876s.jpg",
+                "type": "realtordotcom_mls_listing_image",
+                "tags": [
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9220488667488098
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "road_view",
+                    "probability": 0.4880456030368805
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.9914444088935852
+                  },
+                  {
+                    "__typename": "Tag",
+                    "label": "house_view",
+                    "probability": 0.8947048783302307
+                  }
+                ]
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 880
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2014-10-30",
+          "event_name": "Listing removed",
+          "price": 2590000,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://p.rdcpix.com/v01/l39d6ea44-m0s.jpg",
+                "type": null,
+                "tags": null
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2014-10-29",
+          "event_name": "Sold",
+          "price": 2590000,
+          "source_name": "Public Record",
+          "listing": null
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2014-09-25",
+          "event_name": "Listed",
+          "price": 2590000,
+          "source_name": "TheMLSCLAW",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": [
+              {
+                "__typename": "HomePhoto",
+                "href": "https://p.rdcpix.com/v01/l39d6ea44-m0s.jpg",
+                "type": null,
+                "tags": null
+              }
+            ],
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2006-01-11",
+          "event_name": "Sold",
+          "price": 1621000,
+          "source_name": "Public Record",
+          "listing": null
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2004-02-08",
+          "event_name": "Listing removed",
+          "price": 1688000,
+          "source_name": "ITECH",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": null,
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": null
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "2003-10-08",
+          "event_name": "Listed",
+          "price": 1688000,
+          "source_name": "ITECH",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": null,
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": null
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "1999-02-10",
+          "event_name": "Sold",
+          "price": 500000,
+          "source_name": "Public Record",
+          "listing": null
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "1998-10-22",
+          "event_name": "Listing removed",
+          "price": 659000,
+          "source_name": "ITECH",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": null,
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "1998-02-21",
+          "event_name": "Listed",
+          "price": 659000,
+          "source_name": "ITECH",
+          "listing": {
+            "__typename": "HomeListing",
+            "photos": null,
+            "description": {
+              "__typename": "HomeDescription",
+              "sqft": 7946
+            }
+          }
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "1988-09-15",
+          "event_name": "Sold",
+          "price": 280000,
+          "source_name": "Public Record",
+          "listing": null
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "1985-09-19",
+          "event_name": "Sold",
+          "price": 130000,
+          "source_name": "Public Record",
+          "listing": null
+        },
+        {
+          "__typename": "HomePropertyHistory",
+          "date": "1983-12-14",
+          "event_name": "Sold",
+          "price": 105000,
+          "source_name": "Public Record",
+          "listing": null
+        }
+      ],
+      "local": {
+        "__typename": "Local",
+        "noise": {
+          "__typename": "Noise",
+          "score": 68,
+          "noise_categories": [
+            {
+              "__typename": "NoiseCategory",
+              "type": "airport",
+              "text": "Low"
+            },
+            {
+              "__typename": "NoiseCategory",
+              "type": "traffic",
+              "text": "High"
+            },
+            {
+              "__typename": "NoiseCategory",
+              "type": "local",
+              "text": "High"
+            },
+            {
+              "__typename": "NoiseCategory",
+              "type": "score",
+              "text": "Medium"
+            }
+          ]
+        },
+        "flood": {
+          "__typename": "Flood",
+          "flood_factor_score": 5,
+          "fema_zone": [
+            "X (unshaded)"
+          ]
+        }
+      },
+      "last_sold_price": 2590000,
+      "last_sold_date": "2014-10-29",
+      "estimates": {
+        "__typename": "HomeEstimates",
+        "current_values": [
+          {
+            "__typename": "LatestEstimate",
+            "source": {
+              "__typename": "EstimateSource",
+              "type": "quantarium",
+              "name": "Quantarium"
+            },
+            "estimate": 4760452,
+            "estimate_high": 5712542,
+            "estimate_low": 3808361,
+            "date": "2025-12-24"
+          }
+        ],
+        "historical_values": [
+          {
+            "__typename": "HistoricalEstimate",
+            "source": {
+              "__typename": "EstimateSource",
+              "type": "quantarium",
+              "name": "Quantarium"
+            },
+            "estimates": [
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4760452,
+                "date": "2025-12-24"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4778548,
+                "date": "2025-11-26"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4801725,
+                "date": "2025-10-29"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4810234,
+                "date": "2025-09-24"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4840382,
+                "date": "2025-08-27"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4903528,
+                "date": "2025-07-30"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4878673,
+                "date": "2025-06-25"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4866582,
+                "date": "2025-05-28"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4855184,
+                "date": "2025-04-30"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4780126,
+                "date": "2025-03-26"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4749043,
+                "date": "2025-02-12"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4774769,
+                "date": "2025-01-29"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4766296,
+                "date": "2024-12-18"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4750314,
+                "date": "2024-11-27"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4744035,
+                "date": "2024-10-30"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4816301,
+                "date": "2024-09-25"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4829839,
+                "date": "2024-08-28"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4869362,
+                "date": "2024-07-31"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4851172,
+                "date": "2024-06-26"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4816122,
+                "date": "2024-05-29"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4779941,
+                "date": "2024-04-24"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4673230,
+                "date": "2024-03-27"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4580110,
+                "date": "2024-02-28"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4527906,
+                "date": "2024-01-31"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4457121,
+                "date": "2023-12-27"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4507235,
+                "date": "2023-11-29"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4499553,
+                "date": "2023-10-25"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4536586,
+                "date": "2023-09-27"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4530208,
+                "date": "2023-08-30"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4443309,
+                "date": "2023-07-26"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4340338,
+                "date": "2023-06-28"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4339182,
+                "date": "2023-05-31"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4244371,
+                "date": "2023-04-26"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4240288,
+                "date": "2023-03-29"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4199743,
+                "date": "2023-02-22"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4208298,
+                "date": "2023-01-25"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4292346,
+                "date": "2022-12-28"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4366239,
+                "date": "2022-11-30"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4803583,
+                "date": "2022-10-26"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4835249,
+                "date": "2022-09-28"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4852028,
+                "date": "2022-08-31"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4771149,
+                "date": "2022-07-27"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4767010,
+                "date": "2022-06-29"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4677444,
+                "date": "2022-05-25"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4556426,
+                "date": "2022-04-27"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4478856,
+                "date": "2022-03-30"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4429187,
+                "date": "2022-02-23"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4386252,
+                "date": "2022-01-26"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4350729,
+                "date": "2021-12-29"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4303193,
+                "date": "2021-11-10"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4303193,
+                "date": "2021-10-20"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4280258,
+                "date": "2021-09-29"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4256642,
+                "date": "2021-08-25"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4179849,
+                "date": "2021-07-28"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4091601,
+                "date": "2021-06-30"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4036304,
+                "date": "2021-05-26"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 3973648,
+                "date": "2021-04-28"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 3884521,
+                "date": "2021-03-03"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 3880644,
+                "date": "2021-02-24"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 3842402,
+                "date": "2021-01-27"
+              }
+            ]
+          }
+        ],
+        "forecast_values": [
+          {
+            "__typename": "ForecastEstimate",
+            "source": {
+              "__typename": "EstimateSource",
+              "type": "quantarium",
+              "name": "Quantarium"
+            },
+            "estimates": [
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4766188,
+                "date": "2026-01-01"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4772465,
+                "date": "2026-02-01"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4779032,
+                "date": "2026-03-01"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4785713,
+                "date": "2026-04-01"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4792435,
+                "date": "2026-05-01"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4799163,
+                "date": "2026-06-01"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4805879,
+                "date": "2026-07-01"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4812580,
+                "date": "2026-08-01"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4819261,
+                "date": "2026-09-01"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4825919,
+                "date": "2026-10-01"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4832556,
+                "date": "2026-11-01"
+              },
+              {
+                "__typename": "EstimateRecord",
+                "estimate": 4839167,
+                "date": "2026-12-01"
+              }
+            ]
+          }
+        ]
+      },
+      "virtual_tours": null,
+      "videos": null,
+      "matterport": null,
+      "terms": null,
+      "monthly_fees": null,
+      "one_time_fees": null,
+      "units": null
+    }
+  }
+}

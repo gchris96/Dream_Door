@@ -11,6 +11,7 @@ import {
   FlatList,
   TextInput,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useFonts, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
@@ -18,6 +19,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
 
 export default function App() {
+  const API_BASE = Platform?.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://127.0.0.1:8000';
   const [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
   });
@@ -27,6 +29,7 @@ export default function App() {
   const [likedIds, setLikedIds] = useState(new Set());
   const [dislikedIds, setDislikedIds] = useState(new Set());
   const [savedIds, setSavedIds] = useState(new Set());
+  const [seenIds, setSeenIds] = useState(new Set());
   const [savedOverrideIds, setSavedOverrideIds] = useState(new Set());
   const [savedHouses, setSavedHouses] = useState([]);
   const [savedDetailId, setSavedDetailId] = useState(null);
@@ -58,6 +61,23 @@ export default function App() {
   const [filterBaths, setFilterBaths] = useState(null);
   const [appliedFilterBeds, setAppliedFilterBeds] = useState(null);
   const [appliedFilterBaths, setAppliedFilterBaths] = useState(null);
+  const [preferenceProfile, setPreferenceProfile] = useState({
+    price: null,
+    beds: null,
+    baths: null,
+    sqft: null,
+    yearBuilt: null,
+    typeWeights: {},
+    dislikePriceCenters: [],
+    dislikeTypeWeights: {},
+    dislikeBeds: {},
+    dislikeBaths: {},
+  });
+  const [preferenceVersion, setPreferenceVersion] = useState(0);
+  const [forcedHouseId, setForcedHouseId] = useState(null);
+  const [forcedHouseIndex, setForcedHouseIndex] = useState(null);
+  const [lockedDeckIds, setLockedDeckIds] = useState(null);
+  const [lockedUntilHouseId, setLockedUntilHouseId] = useState(null);
   const [filterLists, setFilterLists] = useState([]);
   const [activeFilterListId, setActiveFilterListId] = useState('all');
   const [showLists, setShowLists] = useState(true);
@@ -140,10 +160,165 @@ export default function App() {
       return matchesPrice && matchesType && matchesBeds && matchesBaths;
     });
   }, [houses, appliedFilterMin, appliedFilterMax, appliedFilterHomeTypes, appliedFilterBeds, appliedFilterBaths]);
-  const swipeHouses = useMemo(
-    () => filteredHouses.filter(house => !savedIds.has(house.id) || savedOverrideIds.has(house.id)),
-    [filteredHouses, savedIds, savedOverrideIds]
+  const baseDeck = useMemo(
+    () =>
+      filteredHouses.filter((house) => {
+        const isSavedFiltered = savedIds.has(house.id) && !savedOverrideIds.has(house.id);
+        const isReplayHouse = lockedDeckIds?.includes(house.id);
+        const isSeen = seenIds.has(house.id);
+        return !isSavedFiltered && (!isSeen || isReplayHouse);
+      }),
+    [filteredHouses, savedIds, savedOverrideIds, seenIds, lockedDeckIds]
   );
+  const swipeHouses = useMemo(() => {
+    const {
+      price,
+      beds,
+      baths,
+      sqft,
+      yearBuilt,
+      typeWeights,
+      dislikePriceCenters,
+      dislikeTypeWeights,
+      dislikeBeds,
+      dislikeBaths,
+    } = preferenceProfile;
+    const hasPrefs =
+      price !== null ||
+      beds !== null ||
+      baths !== null ||
+      sqft !== null ||
+      yearBuilt !== null ||
+      Object.keys(typeWeights).length > 0 ||
+      dislikePriceCenters.length > 0 ||
+      Object.keys(dislikeTypeWeights).length > 0 ||
+      Object.keys(dislikeBeds).length > 0 ||
+      Object.keys(dislikeBaths).length > 0;
+    const scored = (() => {
+      if (!hasPrefs) return baseDeck;
+
+      const scoreHouse = (house) => {
+        let score = 0;
+        const priceValue = typeof house.price === 'number' ? house.price : Number(house.price);
+        const bedsValue = typeof house.beds === 'number' ? house.beds : Number(house.beds);
+        const bathsValue = typeof house.baths === 'number' ? house.baths : Number(house.baths);
+        const sqftValue = typeof house.sqft === 'number' ? house.sqft : Number(house.sqft);
+        const yearValue = typeof house.year_built === 'number' ? house.year_built : Number(house.year_built);
+        const typeValue = house?.property_type ? String(house.property_type) : null;
+
+        if (!Number.isNaN(priceValue) && price !== null) {
+          const delta = Math.abs(priceValue - price) / price;
+          if (delta <= 0.15) score += 2;
+          else if (delta <= 0.3) score += 1;
+        }
+
+        if (!Number.isNaN(bedsValue) && beds !== null) {
+          const diff = Math.abs(bedsValue - beds);
+          if (diff <= 0.5) score += 1;
+          else if (diff >= 2) score -= 0.5;
+        }
+
+        if (!Number.isNaN(bathsValue) && baths !== null) {
+          const diff = Math.abs(bathsValue - baths);
+          if (diff <= 0.5) score += 1;
+          else if (diff >= 2) score -= 0.5;
+        }
+
+        if (!Number.isNaN(sqftValue) && sqft !== null) {
+          const delta = Math.abs(sqftValue - sqft) / sqft;
+          if (delta <= 0.2) score += 1;
+        }
+
+        if (!Number.isNaN(yearValue) && yearBuilt !== null) {
+          const delta = Math.abs(yearValue - yearBuilt);
+          if (delta <= 5) score += 0.5;
+        }
+
+        if (typeValue && typeWeights[typeValue]) {
+          score += Math.min(2, typeWeights[typeValue] * 0.6);
+        }
+
+        if (!Number.isNaN(priceValue) && dislikePriceCenters.length > 0) {
+          const isNearDisliked = dislikePriceCenters.some((center) => {
+            return Math.abs(priceValue - center) / center <= 0.1;
+          });
+          if (isNearDisliked) score -= 2;
+        }
+
+        if (typeValue && dislikeTypeWeights[typeValue]) {
+          score -= Math.min(2, dislikeTypeWeights[typeValue] * 0.6);
+        }
+
+        if (!Number.isNaN(bedsValue) && dislikeBeds[bedsValue]) {
+          score -= 1;
+        }
+
+        if (!Number.isNaN(bathsValue) && dislikeBaths[bathsValue]) {
+          score -= 1;
+        }
+
+        return score;
+      };
+
+      const jitter = (id) => {
+        const seed = `${id}-${preferenceVersion}`;
+        let hash = 0;
+        for (let i = 0; i < seed.length; i += 1) {
+          hash = (hash << 5) - hash + seed.charCodeAt(i);
+          hash |= 0;
+        }
+        const normalized = (hash % 1000) / 1000;
+        return (normalized - 0.5) * 0.6;
+      };
+
+      const ranked = baseDeck
+        .map((house, order) => ({
+          house,
+          order,
+          score: scoreHouse(house),
+          jitter: jitter(house.id ?? order),
+        }))
+        .sort((a, b) => {
+          const scoreDiff = b.score + b.jitter - (a.score + a.jitter);
+          if (scoreDiff !== 0) return scoreDiff;
+          return a.order - b.order;
+        })
+        .map((entry) => entry.house);
+
+      return ranked.length ? ranked : baseDeck;
+    })();
+
+    let ordered = scored;
+    if (lockedDeckIds && lockedDeckIds.length > 0) {
+      const mapById = new Map(scored.map((house) => [house.id, house]));
+      const lockedOrdered = lockedDeckIds
+        .map((id) => mapById.get(id))
+        .filter(Boolean);
+      const remaining = scored.filter((house) => !lockedDeckIds.includes(house.id));
+      ordered = [...lockedOrdered, ...remaining];
+    }
+
+    if (!forcedHouseId) {
+      return ordered;
+    }
+
+    const forcedHouse = ordered.find((house) => house.id === forcedHouseId);
+    if (!forcedHouse) return ordered;
+    const withoutForced = ordered.filter((house) => house.id !== forcedHouseId);
+    const insertAt = Math.max(0, Math.min(forcedHouseIndex ?? 0, withoutForced.length));
+    return [
+      ...withoutForced.slice(0, insertAt),
+      forcedHouse,
+      ...withoutForced.slice(insertAt),
+    ];
+  }, [
+    baseDeck,
+    preferenceProfile,
+    preferenceVersion,
+    forcedHouseId,
+    forcedHouseIndex,
+    lockedDeckIds,
+  ]);
   const likedHouses = useMemo(
     () => houses.filter(house => likedIds.has(house.id)),
     [houses, likedIds]
@@ -172,7 +347,13 @@ export default function App() {
     }
     setHousesError(false);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/deck/');
+      const res = await fetch(`${API_BASE}/api/deck/`);
+      if (!res.ok) {
+        const bodyText = await res.text();
+        console.error('API error:', res.status, bodyText.slice(0, 200));
+        setHousesError(true);
+        return;
+      }
       const data = await res.json();
       setHouses(data.results);
     } catch (e) {
@@ -193,7 +374,12 @@ export default function App() {
 
     const loadSaved = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/saved/');
+        const res = await fetch(`${API_BASE}/api/saved/`);
+        if (!res.ok) {
+          const bodyText = await res.text();
+          console.error('Saved API error:', res.status, bodyText.slice(0, 200));
+          return;
+        }
         const data = await res.json();
         const results = data.results || data;
         setSavedHouses(results);
@@ -212,7 +398,7 @@ export default function App() {
   useEffect(() => {
     if (!pendingLikeId) return;
 
-    fetch(`http://127.0.0.1:8000/api/houses/${pendingLikeId}/like/`, {
+    fetch(`${API_BASE}/api/houses/${pendingLikeId}/like/`, {
       method: 'POST',
     }).catch(() => {});
   }, [pendingLikeId]);
@@ -220,7 +406,7 @@ export default function App() {
   useEffect(() => {
     if (!pendingDislikeId) return;
 
-    fetch(`http://127.0.0.1:8000/api/houses/${pendingDislikeId}/dislike/`, {
+    fetch(`${API_BASE}/api/houses/${pendingDislikeId}/dislike/`, {
       method: 'POST',
     }).catch(() => {});
   }, [pendingDislikeId]);
@@ -230,8 +416,13 @@ export default function App() {
     const current = screen === 'swipe' ? swipeHouses[index] : savedDetailHouse;
     if (!current || detailByHouseId[current.id]) return;
 
-    fetch(`http://127.0.0.1:8000/api/houses/${current.id}/detail/`)
-      .then(res => (res.ok ? res.json() : null))
+    fetch(`${API_BASE}/api/houses/${current.id}/detail/`)
+      .then(async res => {
+        if (res.ok) return res.json();
+        const bodyText = await res.text();
+        console.error('Detail API error:', res.status, bodyText.slice(0, 200));
+        return null;
+      })
       .then(data => {
         if (!data) return;
         setDetailByHouseId(prev => ({ ...prev, [current.id]: data }));
@@ -244,8 +435,13 @@ export default function App() {
     const current = screen === 'swipe' ? swipeHouses[index] : savedDetailHouse;
     if (!current || photoByHouseId[current.id]) return;
 
-    fetch(`http://127.0.0.1:8000/api/houses/${current.id}/photos/`)
-      .then(res => (res.ok ? res.json() : null))
+    fetch(`${API_BASE}/api/houses/${current.id}/photos/`)
+      .then(async res => {
+        if (res.ok) return res.json();
+        const bodyText = await res.text();
+        console.error('Photos API error:', res.status, bodyText.slice(0, 200));
+        return null;
+      })
       .then(data => {
         if (!data) return;
         setPhotoByHouseId(prev => ({ ...prev, [current.id]: data }));
@@ -258,8 +454,13 @@ export default function App() {
     const list = screen === 'saved' ? savedHouses : (screen === 'liked' ? likedHouses : dislikedHouses);
     list.forEach((house) => {
       if (!house || photoByHouseId[house.id]) return;
-      fetch(`http://127.0.0.1:8000/api/houses/${house.id}/photos/`)
-        .then(res => (res.ok ? res.json() : null))
+      fetch(`${API_BASE}/api/houses/${house.id}/photos/`)
+        .then(async res => {
+          if (res.ok) return res.json();
+          const bodyText = await res.text();
+          console.error('Photos API error:', res.status, bodyText.slice(0, 200));
+          return null;
+        })
         .then(data => {
           if (!data) return;
           setPhotoByHouseId(prev => ({ ...prev, [house.id]: data }));
@@ -404,6 +605,63 @@ export default function App() {
     return clampPrice(value);
   };
 
+  const updatePreferencesFromLike = (house) => {
+    if (!house) return;
+    setPreferenceProfile((prev) => {
+      const next = { ...prev };
+      const weight = 0.2;
+      const setAvg = (key, value) => {
+        if (value === null || Number.isNaN(value)) return;
+        next[key] = next[key] === null ? value : next[key] * (1 - weight) + value * weight;
+      };
+      const priceValue = typeof house.price === 'number' ? house.price : Number(house.price);
+      const bedsValue = typeof house.beds === 'number' ? house.beds : Number(house.beds);
+      const bathsValue = typeof house.baths === 'number' ? house.baths : Number(house.baths);
+      const sqftValue = typeof house.sqft === 'number' ? house.sqft : Number(house.sqft);
+      const yearValue = typeof house.year_built === 'number' ? house.year_built : Number(house.year_built);
+      setAvg('price', Number.isNaN(priceValue) ? null : priceValue);
+      setAvg('beds', Number.isNaN(bedsValue) ? null : bedsValue);
+      setAvg('baths', Number.isNaN(bathsValue) ? null : bathsValue);
+      setAvg('sqft', Number.isNaN(sqftValue) ? null : sqftValue);
+      setAvg('yearBuilt', Number.isNaN(yearValue) ? null : yearValue);
+
+      if (house?.property_type) {
+        const type = String(house.property_type);
+        next.typeWeights = { ...next.typeWeights, [type]: (next.typeWeights[type] || 0) + 1 };
+      }
+      return next;
+    });
+    setPreferenceVersion((prev) => prev + 1);
+  };
+
+  const updatePreferencesFromDislike = (house) => {
+    if (!house) return;
+    setPreferenceProfile((prev) => {
+      const next = { ...prev };
+      const priceValue = typeof house.price === 'number' ? house.price : Number(house.price);
+      if (!Number.isNaN(priceValue)) {
+        next.dislikePriceCenters = [...next.dislikePriceCenters, priceValue].slice(-8);
+      }
+      if (house?.property_type) {
+        const type = String(house.property_type);
+        next.dislikeTypeWeights = {
+          ...next.dislikeTypeWeights,
+          [type]: (next.dislikeTypeWeights[type] || 0) + 1,
+        };
+      }
+      const bedsValue = typeof house.beds === 'number' ? house.beds : Number(house.beds);
+      if (!Number.isNaN(bedsValue)) {
+        next.dislikeBeds = { ...next.dislikeBeds, [bedsValue]: (next.dislikeBeds[bedsValue] || 0) + 1 };
+      }
+      const bathsValue = typeof house.baths === 'number' ? house.baths : Number(house.baths);
+      if (!Number.isNaN(bathsValue)) {
+        next.dislikeBaths = { ...next.dislikeBaths, [bathsValue]: (next.dislikeBaths[bathsValue] || 0) + 1 };
+      }
+      return next;
+    });
+    setPreferenceVersion((prev) => prev + 1);
+  };
+
   const minPanResponder = useMemo(
     () =>
       PanResponder.create({
@@ -472,12 +730,16 @@ export default function App() {
     if (!house) return;
 
     setIsAnimating(true);
+    const isForced = forcedHouseId && house.id === forcedHouseId;
+    const isLockedTarget = lockedUntilHouseId && house.id === lockedUntilHouseId;
     const currentIndex = index;
     const isDislike = direction === 'left';
     if (isDislike) {
       setDislikedIds(prev => new Set(prev).add(house.id));
       setPendingDislikeId(house.id);
+      updatePreferencesFromDislike(house);
     }
+    setSeenIds(prev => new Set(prev).add(house.id));
 
     RNAnimated.timing(position, {
       toValue: {
@@ -496,7 +758,17 @@ export default function App() {
           dislikedAdded: isDislike,
         },
       ]);
-      setIndex(prev => prev + 1);
+      if (isLockedTarget) {
+        setLockedDeckIds(null);
+        setLockedUntilHouseId(null);
+      }
+      if (isForced) {
+        setForcedHouseId(null);
+        setForcedHouseIndex(null);
+        setIndex(prev => prev);
+      } else {
+        setIndex(prev => prev + 1);
+      }
       resetPositionNextTick();
       setIsAnimating(false);
     });
@@ -510,8 +782,12 @@ export default function App() {
     if (!house || isAnimating) return;
 
     setIsAnimating(true);
+    const isForced = forcedHouseId && house.id === forcedHouseId;
+    const isLockedTarget = lockedUntilHouseId && house.id === lockedUntilHouseId;
     setLikedIds(prev => new Set(prev).add(house.id));
     setPendingLikeId(house.id);
+    updatePreferencesFromLike(house);
+    setSeenIds(prev => new Set(prev).add(house.id));
     const currentIndex = index;
 
     RNAnimated.timing(position, {
@@ -528,7 +804,17 @@ export default function App() {
           dislikedAdded: false,
         },
       ]);
-      setIndex(prev => prev + 1);
+      if (isLockedTarget) {
+        setLockedDeckIds(null);
+        setLockedUntilHouseId(null);
+      }
+      if (isForced) {
+        setForcedHouseId(null);
+        setForcedHouseIndex(null);
+        setIndex(prev => prev);
+      } else {
+        setIndex(prev => prev + 1);
+      }
       resetPositionNextTick();
       setIsAnimating(false);
     });
@@ -545,7 +831,7 @@ export default function App() {
     const isSwipeContext = !overrideHouse;
     const isSaved = savedIds.has(house.id);
     if (isSaved) {
-      fetch(`http://127.0.0.1:8000/api/houses/${house.id}/unsave/`, {
+      fetch(`${API_BASE}/api/houses/${house.id}/unsave/`, {
         method: 'DELETE',
       }).catch(() => {});
       setIsSaving(true);
@@ -570,12 +856,14 @@ export default function App() {
       if (isSwipeContext) {
         setSavedOverrideIds(prev => new Set(prev).add(house.id));
       }
-      fetch(`http://127.0.0.1:8000/api/houses/${house.id}/save/`, {
+      fetch(`${API_BASE}/api/houses/${house.id}/save/`, {
         method: 'POST',
       }).catch(() => {});
       setIsSaving(true);
       if (isSwipeContext && screen === 'swipe') {
         setIsAnimating(true);
+        const isForced = forcedHouseId && house.id === forcedHouseId;
+        const isLockedTarget = lockedUntilHouseId && house.id === lockedUntilHouseId;
         runToastAnimation('Saved!', () => {
           RNAnimated.timing(position, {
             toValue: { x: screenWidth, y: 0 },
@@ -587,6 +875,7 @@ export default function App() {
               next.delete(house.id);
               return next;
             });
+            setSeenIds(prev => new Set(prev).add(house.id));
             setHistory(prev => [
               ...prev,
               {
@@ -597,7 +886,17 @@ export default function App() {
                 savedAdded: true,
               },
             ]);
-            setIndex(prev => prev + 1);
+            if (isLockedTarget) {
+              setLockedDeckIds(null);
+              setLockedUntilHouseId(null);
+            }
+            if (isForced) {
+              setForcedHouseId(null);
+              setForcedHouseIndex(null);
+              setIndex(prev => prev);
+            } else {
+              setIndex(prev => prev + 1);
+            }
             resetPositionNextTick();
             setIsSaving(false);
             setIsAnimating(false);
@@ -632,6 +931,12 @@ export default function App() {
     if (isAnimating || history.length === 0) return;
     const last = history[history.length - 1];
     setHistory(prev => prev.slice(0, -1));
+    if (last?.houseId) {
+      setForcedHouseId(last.houseId);
+      setForcedHouseIndex(last.index ?? 0);
+      setLockedDeckIds(swipeHouses.map((house) => house.id));
+      setLockedUntilHouseId(last.houseId);
+    }
     if (last?.likedAdded && last.houseId) {
       setLikedIds(prev => {
         const next = new Set(prev);
@@ -649,8 +954,15 @@ export default function App() {
     if (last?.savedAdded && last.houseId) {
       setSavedOverrideIds(prev => new Set(prev).add(last.houseId));
     }
+    if (last?.houseId) {
+      setSeenIds(prev => {
+        const next = new Set(prev);
+        next.delete(last.houseId);
+        return next;
+      });
+    }
     position.setValue({ x: 0, y: 0 });
-    setIndex(last.index);
+    setIndex(last.index ?? 0);
   };
 
   // -------------------------
@@ -1310,7 +1622,7 @@ export default function App() {
                     style={styles.removeSavedButton}
                     onPress={() => {
                       if (isSaving) return;
-                      fetch(`http://127.0.0.1:8000/api/houses/${item.id}/unsave/`, {
+                      fetch(`${API_BASE}/api/houses/${item.id}/unsave/`, {
                         method: 'DELETE',
                       }).catch(() => {});
                       setIsSaving(true);
