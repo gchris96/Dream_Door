@@ -32,6 +32,7 @@ SECRET_KEY = os.getenv(
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
+print("DEBUG flag:", DEBUG)
 
 ALLOWED_HOSTS = ["*"]
 
