@@ -1,1 +1,1 @@
-web: python manage.py migrate && python manage.py loaddata houses_fixture.json && gunicorn DREAM_DOOR.wsgi
+web: python manage.py migrate && gunicorn DREAM_DOOR.wsgi
