@@ -108,7 +108,7 @@ describe('App empty and error states', () => {
     fireEvent.press(getByText('Browse All Homes'));
 
     await waitFor(() => {
-      expect(getByText('No more homes. Modify filters to show more.')).toBeTruthy();
+      expect(getByText("You've reached the end of this deck")).toBeTruthy();
     });
   });
 

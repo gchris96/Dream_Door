@@ -15,28 +15,43 @@ import {
 import { Image } from 'expo-image';
 import { useFonts, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
-import SwipeDeck from '../components/SwipeDeck';
-import EmptyState from '../components/EmptyState';
-import useHouses from '../hooks/useHouses';
-import useSwipeDeck from '../hooks/useSwipeDeck';
-import { houseService } from '../services/houseService';
-import { formatFilterTitle, formatPrice } from '../utils/formatters';
+import { Gesture, GestureDetector, GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
+import Animated, {
+  Extrapolate,
+  interpolate,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 
-export default function DeckScreen() {
+export default function App() {
+  // const API_BASE = 'https://dreamdoor-production.up.railway.app';
+  const API_BASE = 'http://localhost:8000'
   const [fontsLoaded] = useFonts({
     Poppins_600SemiBold,
   });
   const [screen, setScreen] = useState('home');
-  const { houses, loading: isLoadingHouses, refreshing: isRefreshingHouses, error: housesError, refresh: refreshHouses } = useHouses();
+  const [houses, setHouses] = useState([]);
+  const [index, setIndex] = useState(0);
+  const [likedIds, setLikedIds] = useState(new Set());
+  const [dislikedIds, setDislikedIds] = useState(new Set());
   const [savedIds, setSavedIds] = useState(new Set());
+  const [seenByFilterKey, setSeenByFilterKey] = useState(new Map());
   const [savedOverrideIds, setSavedOverrideIds] = useState(new Set());
   const [savedHouses, setSavedHouses] = useState([]);
   const [savedDetailId, setSavedDetailId] = useState(null);
+  const [pendingLikeId, setPendingLikeId] = useState(null);
+  const [pendingDislikeId, setPendingDislikeId] = useState(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [history, setHistory] = useState([]);
   const [detailByHouseId, setDetailByHouseId] = useState({});
   const [photoByHouseId, setPhotoByHouseId] = useState({});
+  const [showLikeBadge, setShowLikeBadge] = useState(false);
+  const [likeBadgeId, setLikeBadgeId] = useState(null);
+  const [showDislikeBadge, setShowDislikeBadge] = useState(false);
+  const [dislikeBadgeId, setDislikeBadgeId] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const [photoViewerHouseId, setPhotoViewerHouseId] = useState(null);
@@ -54,49 +69,44 @@ export default function DeckScreen() {
   const [filterBaths, setFilterBaths] = useState(null);
   const [appliedFilterBeds, setAppliedFilterBeds] = useState(null);
   const [appliedFilterBaths, setAppliedFilterBaths] = useState(null);
-  const {
-    index,
-    setIndex,
-    history,
-    setHistory,
-    likedIds,
-    dislikedIds,
-    pendingLikeId,
-    pendingDislikeId,
-    swipeHouses,
-    filteredHouses,
-    handleSwipeComplete,
-    undoSwipe,
-    forcedHouseId,
-    forcedHouseIndex,
-    setForcedHouseId,
-    setForcedHouseIndex,
-    lockedDeckIds,
-    lockedUntilHouseId,
-    setLockedDeckIds,
-    setLockedUntilHouseId,
-    setSeenByFilterKey,
-    markHouseSeen,
-    appliedFilterKey,
-  } = useSwipeDeck({
-    houses,
-    savedIds,
-    savedOverrideIds,
-    setSavedOverrideIds,
-    appliedFilterMin,
-    appliedFilterMax,
-    appliedFilterHomeTypes,
-    appliedFilterBeds,
-    appliedFilterBaths,
+  const [preferenceProfile, setPreferenceProfile] = useState({
+    price: null,
+    beds: null,
+    baths: null,
+    sqft: null,
+    yearBuilt: null,
+    typeWeights: {},
+    dislikePriceCenters: [],
+    dislikeTypeWeights: {},
+    dislikeBeds: {},
+    dislikeBaths: {},
   });
+  const [preferenceVersion, setPreferenceVersion] = useState(0);
+  const [forcedHouseId, setForcedHouseId] = useState(null);
+  const [forcedHouseIndex, setForcedHouseIndex] = useState(null);
+  const [lockedDeckIds, setLockedDeckIds] = useState(null);
+  const [lockedUntilHouseId, setLockedUntilHouseId] = useState(null);
   const [filterLists, setFilterLists] = useState([]);
   const [activeFilterListId, setActiveFilterListId] = useState('all');
   const [showLists, setShowLists] = useState(true);
   const [filterReturnTo, setFilterReturnTo] = useState(null);
   const [showFilterPrompt, setShowFilterPrompt] = useState(false);
   const [filterTrackWidth, setFilterTrackWidth] = useState(0);
+  const [housesError, setHousesError] = useState(false);
+  const [isLoadingHouses, setIsLoadingHouses] = useState(true);
+  const [isRefreshingHouses, setIsRefreshingHouses] = useState(false);
 
+  const emptySeenIds = useRef(new Set());
 
+  useEffect(() => {
+    if (seenByFilterKey instanceof Map) return;
+    setSeenByFilterKey(new Map());
+  }, [seenByFilterKey]);
+
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const swipeLocked = useSharedValue(false);
+  const currentHouseId = useSharedValue(null);
 
   const savedToastOpacity = useRef(new RNAnimated.Value(0)).current;
   const savedToastTranslate = useRef(new RNAnimated.Value(20)).current;
@@ -118,6 +128,197 @@ export default function DeckScreen() {
   }, [houses]);
 
 
+  const appliedFilterKey = useMemo(() => {
+    const types = [...appliedFilterHomeTypes].sort().join(',');
+    const beds = appliedFilterBeds ?? 'any';
+    const baths = appliedFilterBaths ?? 'any';
+    return `min:${appliedFilterMin}|max:${appliedFilterMax}|types:${types}|beds:${beds}|baths:${baths}`;
+  }, [appliedFilterMin, appliedFilterMax, appliedFilterHomeTypes, appliedFilterBeds, appliedFilterBaths]);
+
+  const seenKey = appliedFilterKey;
+  const seenIds = useMemo(() => {
+    if (!(seenByFilterKey instanceof Map)) {
+      return emptySeenIds.current;
+    }
+    return seenByFilterKey.get(seenKey) || emptySeenIds.current;
+  }, [seenByFilterKey, seenKey]);
+
+  const filteredHouses = useMemo(() => {
+    return houses.filter((house) => {
+      const price = typeof house.price === 'number' ? house.price : Number(house.price);
+      if (Number.isNaN(price)) return false;
+      const bedsValue = typeof house.beds === 'number' ? house.beds : Number(house.beds);
+      const bathsValue = typeof house.baths === 'number' ? house.baths : Number(house.baths);
+      const bedsCount = Number.isNaN(bedsValue) ? 0 : bedsValue;
+      const bathsCount = Number.isNaN(bathsValue) ? 0 : bathsValue;
+      const matchesPrice = price >= appliedFilterMin && price <= appliedFilterMax;
+      const matchesType =
+        appliedFilterHomeTypes.length === 0 ||
+        appliedFilterHomeTypes.includes(String(house?.property_type));
+      const matchesBeds = appliedFilterBeds === null || bedsCount >= appliedFilterBeds;
+      const matchesBaths = appliedFilterBaths === null || bathsCount >= appliedFilterBaths;
+      return matchesPrice && matchesType && matchesBeds && matchesBaths;
+    });
+  }, [houses, appliedFilterMin, appliedFilterMax, appliedFilterHomeTypes, appliedFilterBeds, appliedFilterBaths]);
+  const baseDeck = useMemo(
+    () =>
+      filteredHouses.filter((house) => {
+        const isSavedFiltered = savedIds.has(house.id) && !savedOverrideIds.has(house.id);
+        const isReplayHouse = lockedDeckIds?.includes(house.id);
+        const isSeen = seenIds.has(house.id);
+        return !isSavedFiltered && (!isSeen || isReplayHouse);
+      }),
+    [filteredHouses, savedIds, savedOverrideIds, seenIds, lockedDeckIds]
+  );
+  const swipeHouses = useMemo(() => {
+    const {
+      price,
+      beds,
+      baths,
+      sqft,
+      yearBuilt,
+      typeWeights,
+      dislikePriceCenters,
+      dislikeTypeWeights,
+      dislikeBeds,
+      dislikeBaths,
+    } = preferenceProfile;
+    const hasPrefs =
+      price !== null ||
+      beds !== null ||
+      baths !== null ||
+      sqft !== null ||
+      yearBuilt !== null ||
+      Object.keys(typeWeights).length > 0 ||
+      dislikePriceCenters.length > 0 ||
+      Object.keys(dislikeTypeWeights).length > 0 ||
+      Object.keys(dislikeBeds).length > 0 ||
+      Object.keys(dislikeBaths).length > 0;
+    const scored = (() => {
+      if (!hasPrefs) return baseDeck;
+
+      const scoreHouse = (house) => {
+        let score = 0;
+        const priceValue = typeof house.price === 'number' ? house.price : Number(house.price);
+        const bedsValue = typeof house.beds === 'number' ? house.beds : Number(house.beds);
+        const bathsValue = typeof house.baths === 'number' ? house.baths : Number(house.baths);
+        const sqftValue = typeof house.sqft === 'number' ? house.sqft : Number(house.sqft);
+        const yearValue = typeof house.year_built === 'number' ? house.year_built : Number(house.year_built);
+        const typeValue = house?.property_type ? String(house.property_type) : null;
+
+        if (!Number.isNaN(priceValue) && price !== null) {
+          const delta = Math.abs(priceValue - price) / price;
+          if (delta <= 0.15) score += 2;
+          else if (delta <= 0.3) score += 1;
+        }
+
+        if (!Number.isNaN(bedsValue) && beds !== null) {
+          const diff = Math.abs(bedsValue - beds);
+          if (diff <= 0.5) score += 1;
+          else if (diff >= 2) score -= 0.5;
+        }
+
+        if (!Number.isNaN(bathsValue) && baths !== null) {
+          const diff = Math.abs(bathsValue - baths);
+          if (diff <= 0.5) score += 1;
+          else if (diff >= 2) score -= 0.5;
+        }
+
+        if (!Number.isNaN(sqftValue) && sqft !== null) {
+          const delta = Math.abs(sqftValue - sqft) / sqft;
+          if (delta <= 0.2) score += 1;
+        }
+
+        if (!Number.isNaN(yearValue) && yearBuilt !== null) {
+          const delta = Math.abs(yearValue - yearBuilt);
+          if (delta <= 5) score += 0.5;
+        }
+
+        if (typeValue && typeWeights[typeValue]) {
+          score += Math.min(2, typeWeights[typeValue] * 0.6);
+        }
+
+        if (!Number.isNaN(priceValue) && dislikePriceCenters.length > 0) {
+          const isNearDisliked = dislikePriceCenters.some((center) => {
+            return Math.abs(priceValue - center) / center <= 0.1;
+          });
+          if (isNearDisliked) score -= 2;
+        }
+
+        if (typeValue && dislikeTypeWeights[typeValue]) {
+          score -= Math.min(2, dislikeTypeWeights[typeValue] * 0.6);
+        }
+
+        if (!Number.isNaN(bedsValue) && dislikeBeds[bedsValue]) {
+          score -= 1;
+        }
+
+        if (!Number.isNaN(bathsValue) && dislikeBaths[bathsValue]) {
+          score -= 1;
+        }
+
+        return score;
+      };
+
+      const jitter = (id) => {
+        const seed = `${id}-${preferenceVersion}`;
+        let hash = 0;
+        for (let i = 0; i < seed.length; i += 1) {
+          hash = (hash << 5) - hash + seed.charCodeAt(i);
+          hash |= 0;
+        }
+        const normalized = (hash % 1000) / 1000;
+        return (normalized - 0.5) * 0.6;
+      };
+
+      const ranked = baseDeck
+        .map((house, order) => ({
+          house,
+          order,
+          score: scoreHouse(house),
+          jitter: jitter(house.id ?? order),
+        }))
+        .sort((a, b) => {
+          const scoreDiff = b.score + b.jitter - (a.score + a.jitter);
+          if (scoreDiff !== 0) return scoreDiff;
+          return a.order - b.order;
+        })
+        .map((entry) => entry.house);
+
+      return ranked.length ? ranked : baseDeck;
+    })();
+
+    let ordered = scored;
+    if (lockedDeckIds && lockedDeckIds.length > 0) {
+      const mapById = new Map(scored.map((house) => [house.id, house]));
+      const lockedOrdered = lockedDeckIds
+        .map((id) => mapById.get(id))
+        .filter(Boolean);
+      const remaining = scored.filter((house) => !lockedDeckIds.includes(house.id));
+      ordered = [...lockedOrdered, ...remaining];
+    }
+
+    if (!forcedHouseId) {
+      return ordered;
+    }
+
+    const forcedHouse = ordered.find((house) => house.id === forcedHouseId);
+    if (!forcedHouse) return ordered;
+    const withoutForced = ordered.filter((house) => house.id !== forcedHouseId);
+    const insertAt = Math.max(0, Math.min(forcedHouseIndex ?? 0, withoutForced.length));
+    return [
+      ...withoutForced.slice(0, insertAt),
+      forcedHouse,
+      ...withoutForced.slice(insertAt),
+    ];
+  }, [
+    baseDeck,
+    preferenceProfile,
+    preferenceVersion,
+    forcedHouseId,
+    forcedHouseIndex,
+    lockedDeckIds,
+  ]);
   const likedHouses = useMemo(
     () => houses.filter(house => likedIds.has(house.id)),
     [houses, likedIds]
@@ -135,13 +336,52 @@ export default function DeckScreen() {
     );
   }, [savedDetailId, savedHouses, houses]);
 
+  // -------------------------
+  // LOAD HOUSES
+  // -------------------------
+  const loadHouses = async (isRefresh = false) => {
+    if (isRefresh) {
+      setIsRefreshingHouses(true);
+    } else {
+      setIsLoadingHouses(true);
+    }
+    setHousesError(false);
+    try {
+      const res = await fetch(`${API_BASE}/api/deck/`);
+      if (!res.ok) {
+        const bodyText = await res.text();
+        console.error('API error:', res.status, bodyText.slice(0, 200));
+        setHousesError(true);
+        return;
+      }
+      const data = await res.json();
+      setHouses(data.results);
+    } catch (e) {
+      setHousesError(true);
+      console.error('API error:', e);
+    } finally {
+      setIsLoadingHouses(false);
+      setIsRefreshingHouses(false);
+    }
+  };
+
+  useEffect(() => {
+    loadHouses();
+  }, []);
+
   useEffect(() => {
     if (screen !== 'saved') return;
 
     const loadSaved = async () => {
       try {
-        const data = await houseService.fetchSaved();
-        const results = Array.isArray(data?.results) ? data.results : data;
+        const res = await fetch(`${API_BASE}/api/saved/`);
+        if (!res.ok) {
+          const bodyText = await res.text();
+          console.error('Saved API error:', res.status, bodyText.slice(0, 200));
+          return;
+        }
+        const data = await res.json();
+        const results = data.results || data;
         setSavedHouses(results);
         setSavedIds(new Set(results.map(item => item.id)));
       } catch (e) {
@@ -158,13 +398,17 @@ export default function DeckScreen() {
   useEffect(() => {
     if (!pendingLikeId) return;
 
-    houseService.likeHouse(pendingLikeId).catch(() => {});
+    fetch(`${API_BASE}/api/houses/${pendingLikeId}/like/`, {
+      method: 'POST',
+    }).catch(() => {});
   }, [pendingLikeId]);
 
   useEffect(() => {
     if (!pendingDislikeId) return;
 
-    houseService.dislikeHouse(pendingDislikeId).catch(() => {});
+    fetch(`${API_BASE}/api/houses/${pendingDislikeId}/dislike/`, {
+      method: 'POST',
+    }).catch(() => {});
   }, [pendingDislikeId]);
 
   useEffect(() => {
@@ -172,14 +416,18 @@ export default function DeckScreen() {
     const current = screen === 'swipe' ? swipeHouses[index] : savedDetailHouse;
     if (!current || detailByHouseId[current.id]) return;
 
-    houseService.fetchHouseDetail(current.id)
+    fetch(`${API_BASE}/api/houses/${current.id}/detail/`)
+      .then(async res => {
+        if (res.ok) return res.json();
+        const bodyText = await res.text();
+        console.error('Detail API error:', res.status, bodyText.slice(0, 200));
+        return null;
+      })
       .then(data => {
         if (!data) return;
         setDetailByHouseId(prev => ({ ...prev, [current.id]: data }));
       })
-      .catch((e) => {
-        console.error('Detail API error:', e);
-      });
+      .catch(() => {});
   }, [screen, swipeHouses, index, savedDetailHouse, detailByHouseId]);
 
   useEffect(() => {
@@ -187,14 +435,18 @@ export default function DeckScreen() {
     const current = screen === 'swipe' ? swipeHouses[index] : savedDetailHouse;
     if (!current || photoByHouseId[current.id]) return;
 
-    houseService.fetchHousePhotos(current.id)
+    fetch(`${API_BASE}/api/houses/${current.id}/photos/`)
+      .then(async res => {
+        if (res.ok) return res.json();
+        const bodyText = await res.text();
+        console.error('Photos API error:', res.status, bodyText.slice(0, 200));
+        return null;
+      })
       .then(data => {
         if (!data) return;
         setPhotoByHouseId(prev => ({ ...prev, [current.id]: data }));
       })
-      .catch((e) => {
-        console.error('Photos API error:', e);
-      });
+      .catch(() => {});
   }, [screen, swipeHouses, index, savedDetailHouse, photoByHouseId]);
 
   useEffect(() => {
@@ -202,16 +454,26 @@ export default function DeckScreen() {
     const list = screen === 'saved' ? savedHouses : (screen === 'liked' ? likedHouses : dislikedHouses);
     list.forEach((house) => {
       if (!house || photoByHouseId[house.id]) return;
-      houseService.fetchHousePhotos(house.id)
+      fetch(`${API_BASE}/api/houses/${house.id}/photos/`)
+        .then(async res => {
+          if (res.ok) return res.json();
+          const bodyText = await res.text();
+          console.error('Photos API error:', res.status, bodyText.slice(0, 200));
+          return null;
+        })
         .then(data => {
           if (!data) return;
           setPhotoByHouseId(prev => ({ ...prev, [house.id]: data }));
         })
-        .catch((e) => {
-          console.error('Photos API error:', e);
-        });
+        .catch(() => {});
     });
   }, [screen, savedHouses, likedHouses, dislikedHouses, photoByHouseId]);
+
+  const resetSwipePosition = () => {
+    translateX.value = 0;
+    translateY.value = 0;
+    swipeLocked.value = false;
+  };
 
   const resetDeckForFilters = ({ preserveSeen = true } = {}) => {
     setIndex(0);
@@ -219,7 +481,7 @@ export default function DeckScreen() {
     if (!preserveSeen) {
       setSeenByFilterKey((prev) => {
         const next = new Map(prev);
-        next.set(appliedFilterKey, new Set());
+        next.set(seenKey, new Set());
         return next;
       });
     }
@@ -227,6 +489,7 @@ export default function DeckScreen() {
     setForcedHouseIndex(null);
     setLockedDeckIds(null);
     setLockedUntilHouseId(null);
+    resetSwipePosition();
   };
 
   const runToastAnimation = (message, onComplete) => {
@@ -272,6 +535,27 @@ export default function DeckScreen() {
   const PRICE_STEP = 25000;
 
   const clampPrice = (value) => Math.min(PRICE_MAX, Math.max(PRICE_MIN, value));
+  const formatPrice = (value) => `$${value.toLocaleString()}`;
+  const formatPriceCompact = (value) => {
+    if (value >= 1000000) {
+      const rounded = Math.round((value / 1000000) * 10) / 10;
+      return `$${rounded}m`;
+    }
+    if (value >= 1000) {
+      const rounded = Math.round(value / 1000);
+      return `$${rounded}k`;
+    }
+    return `$${value}`;
+  };
+  const formatFilterTitle = (min, max, homeTypes, beds, baths) => {
+    const maxLabel = max >= PRICE_MAX ? '$10M+' : formatPriceCompact(max);
+    const typeLabel = Array.isArray(homeTypes) && homeTypes.length
+      ? ` · ${homeTypes.length} types`
+      : '';
+    const bedsLabel = beds !== null ? ` · ${beds}+ bd` : '';
+    const bathsLabel = baths !== null ? ` · ${baths}+ ba` : '';
+    return `${formatPriceCompact(min)} - ${maxLabel}${typeLabel}${bedsLabel}${bathsLabel}`;
+  };
   const toggleHomeType = (type) => {
     setFilterHomeTypes((prev) => {
       if (prev.includes(type)) {
@@ -282,7 +566,7 @@ export default function DeckScreen() {
   };
   const ensureFilterList = (id, min, max, homeTypes, beds, baths) => {
     if (!id || id === 'all') return null;
-    const title = formatFilterTitle(min, max, homeTypes, beds, baths, PRICE_MAX);
+    const title = formatFilterTitle(min, max, homeTypes, beds, baths);
     setFilterLists((prev) => {
       const exists = prev.some((item) => item.id === id);
       if (exists) {
@@ -335,6 +619,63 @@ export default function DeckScreen() {
     const value = Number(cleaned);
     if (Number.isNaN(value)) return null;
     return clampPrice(value);
+  };
+
+  const updatePreferencesFromLike = (house) => {
+    if (!house) return;
+    setPreferenceProfile((prev) => {
+      const next = { ...prev };
+      const weight = 0.2;
+      const setAvg = (key, value) => {
+        if (value === null || Number.isNaN(value)) return;
+        next[key] = next[key] === null ? value : next[key] * (1 - weight) + value * weight;
+      };
+      const priceValue = typeof house.price === 'number' ? house.price : Number(house.price);
+      const bedsValue = typeof house.beds === 'number' ? house.beds : Number(house.beds);
+      const bathsValue = typeof house.baths === 'number' ? house.baths : Number(house.baths);
+      const sqftValue = typeof house.sqft === 'number' ? house.sqft : Number(house.sqft);
+      const yearValue = typeof house.year_built === 'number' ? house.year_built : Number(house.year_built);
+      setAvg('price', Number.isNaN(priceValue) ? null : priceValue);
+      setAvg('beds', Number.isNaN(bedsValue) ? null : bedsValue);
+      setAvg('baths', Number.isNaN(bathsValue) ? null : bathsValue);
+      setAvg('sqft', Number.isNaN(sqftValue) ? null : sqftValue);
+      setAvg('yearBuilt', Number.isNaN(yearValue) ? null : yearValue);
+
+      if (house?.property_type) {
+        const type = String(house.property_type);
+        next.typeWeights = { ...next.typeWeights, [type]: (next.typeWeights[type] || 0) + 1 };
+      }
+      return next;
+    });
+    setPreferenceVersion((prev) => prev + 1);
+  };
+
+  const updatePreferencesFromDislike = (house) => {
+    if (!house) return;
+    setPreferenceProfile((prev) => {
+      const next = { ...prev };
+      const priceValue = typeof house.price === 'number' ? house.price : Number(house.price);
+      if (!Number.isNaN(priceValue)) {
+        next.dislikePriceCenters = [...next.dislikePriceCenters, priceValue].slice(-8);
+      }
+      if (house?.property_type) {
+        const type = String(house.property_type);
+        next.dislikeTypeWeights = {
+          ...next.dislikeTypeWeights,
+          [type]: (next.dislikeTypeWeights[type] || 0) + 1,
+        };
+      }
+      const bedsValue = typeof house.beds === 'number' ? house.beds : Number(house.beds);
+      if (!Number.isNaN(bedsValue)) {
+        next.dislikeBeds = { ...next.dislikeBeds, [bedsValue]: (next.dislikeBeds[bedsValue] || 0) + 1 };
+      }
+      const bathsValue = typeof house.baths === 'number' ? house.baths : Number(house.baths);
+      if (!Number.isNaN(bathsValue)) {
+        next.dislikeBaths = { ...next.dislikeBaths, [bathsValue]: (next.dislikeBaths[bathsValue] || 0) + 1 };
+      }
+      return next;
+    });
+    setPreferenceVersion((prev) => prev + 1);
   };
 
   const minPanResponder = useMemo(
@@ -391,22 +732,88 @@ export default function DeckScreen() {
     [filterMin, filterMax, filterTrackWidth]
   );
 
-  const onSwipeComplete = (direction, houseId) => {
-    handleSwipeComplete(direction, houseId);
+  const SWIPE_DISTANCE = Math.max(140, screenWidth * 0.28);
+  const SWIPE_VELOCITY = 900;
+  const SWIPE_SPRING = {
+    damping: 20,
+    stiffness: 180,
+    mass: 0.9,
+  };
+
+  const markHouseSeen = (houseId) => {
+    setSeenByFilterKey((prev) => {
+      const next = new Map(prev);
+      const current = new Set(next.get(seenKey) || []);
+      current.add(houseId);
+      next.set(seenKey, current);
+      return next;
+    });
+  };
+
+  const unmarkHouseSeen = (houseId) => {
+    setSeenByFilterKey((prev) => {
+      const next = new Map(prev);
+      const current = new Set(next.get(seenKey) || []);
+      current.delete(houseId);
+      next.set(seenKey, current);
+      return next;
+    });
+  };
+
+  const handleSwipeComplete = (direction, houseId) => {
+    const house = swipeHouses.find((item) => item.id === houseId);
+    if (!house) {
+      setIsAnimating(false);
+      return;
+    }
+    const isForced = forcedHouseId && house.id === forcedHouseId;
+    const isLockedTarget = lockedUntilHouseId && house.id === lockedUntilHouseId;
+    const currentIndex = index;
+    const isDislike = direction === 'left';
+    if (isDislike) {
+      setDislikedIds(prev => new Set(prev).add(house.id));
+      setPendingDislikeId(house.id);
+      updatePreferencesFromDislike(house);
+    } else {
+      setLikedIds(prev => new Set(prev).add(house.id));
+      setPendingLikeId(house.id);
+      updatePreferencesFromLike(house);
+    }
+    markHouseSeen(house.id);
+    setHistory(prev => [
+      ...prev,
+      {
+        index: currentIndex,
+        houseId: house.id,
+        likedAdded: !isDislike,
+        dislikedAdded: isDislike,
+      },
+    ]);
+    if (isLockedTarget) {
+      setLockedDeckIds(null);
+      setLockedUntilHouseId(null);
+    }
+    if (isForced) {
+      setForcedHouseId(null);
+      setForcedHouseIndex(null);
+      setIndex(0);
+    } else {
+      setIndex(0);
+    }
+    resetSwipePosition();
     setIsAnimating(false);
   };
 
-  const handleUndo = () => {
-    if (isAnimating) return;
-    undoSwipe();
-  };
-
-  const likeCurrentHouse = () => {
+  const swipeOffScreen = (direction) => {
     if (isAnimating) return;
     const house = swipeHouses[index];
     if (!house) return;
     setIsAnimating(true);
-    onSwipeComplete('right', house.id);
+    handleSwipeComplete(direction, house.id);
+  };
+
+  const likeCurrentHouse = () => {
+    swipeOffScreen('right');
   };
 
   // -------------------------
@@ -420,7 +827,9 @@ export default function DeckScreen() {
     const isSwipeContext = !overrideHouse;
     const isSaved = savedIds.has(house.id);
     if (isSaved) {
-      houseService.unsaveHouse(house.id).catch(() => {});
+      fetch(`${API_BASE}/api/houses/${house.id}/unsave/`, {
+        method: 'DELETE',
+      }).catch(() => {});
       setIsSaving(true);
       runToastAnimation('Unsaved', () => {
         setSavedIds(prev => {
@@ -443,7 +852,9 @@ export default function DeckScreen() {
       if (isSwipeContext) {
         setSavedOverrideIds(prev => new Set(prev).add(house.id));
       }
-      houseService.saveHouse(house.id).catch(() => {});
+      fetch(`${API_BASE}/api/houses/${house.id}/save/`, {
+        method: 'POST',
+      }).catch(() => {});
       setIsSaving(true);
       if (isSwipeContext && screen === 'swipe') {
         setIsAnimating(true);
@@ -477,6 +888,7 @@ export default function DeckScreen() {
           } else {
             setIndex(0);
           }
+          resetSwipePosition();
           setIsSaving(false);
           setIsAnimating(false);
         });
@@ -505,7 +917,137 @@ export default function DeckScreen() {
     }
   };
 
+  const undoSwipe = () => {
+    if (isAnimating || history.length === 0) return;
+    const last = history[history.length - 1];
+    setHistory(prev => prev.slice(0, -1));
+    if (last?.houseId) {
+      setForcedHouseId(last.houseId);
+      setForcedHouseIndex(last.index ?? 0);
+      setLockedDeckIds(swipeHouses.map((house) => house.id));
+      setLockedUntilHouseId(last.houseId);
+    }
+    if (last?.likedAdded && last.houseId) {
+      setLikedIds(prev => {
+        const next = new Set(prev);
+        next.delete(last.houseId);
+        return next;
+      });
+    }
+    if (last?.dislikedAdded && last.houseId) {
+      setDislikedIds(prev => {
+        const next = new Set(prev);
+        next.delete(last.houseId);
+        return next;
+      });
+    }
+    if (last?.savedAdded && last.houseId) {
+      setSavedOverrideIds(prev => new Set(prev).add(last.houseId));
+    }
+    if (last?.houseId) {
+      unmarkHouseSeen(last.houseId);
+    }
+    resetSwipePosition();
+    setIndex(last.index ?? 0);
+  };
 
+  const activeHouseId = swipeHouses[index]?.id ?? null;
+
+  useEffect(() => {
+    currentHouseId.value = activeHouseId;
+  }, [activeHouseId]);
+
+  const cardAnimatedStyle = useAnimatedStyle(() => {
+    const rotate = interpolate(
+      translateX.value,
+      [-screenWidth, 0, screenWidth],
+      [-10, 0, 10],
+      Extrapolate.CLAMP
+    );
+    const lift = interpolate(
+      Math.abs(translateX.value),
+      [0, screenWidth],
+      [0, -10],
+      Extrapolate.CLAMP
+    );
+    return {
+      transform: [
+        { translateX: translateX.value },
+        { translateY: translateY.value + lift },
+        { rotate: `${rotate}deg` },
+      ],
+    };
+  });
+
+  const likeBadgeAnimatedStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      translateX.value,
+      [0, screenWidth * 0.25],
+      [0, 1],
+      Extrapolate.CLAMP
+    );
+    const nudge = translateX.value * 0.08;
+    return {
+      opacity,
+      transform: [{ translateX: -40 + nudge }, { translateY: -40 }],
+    };
+  });
+
+  const dislikeBadgeAnimatedStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      translateX.value,
+      [-screenWidth * 0.25, 0],
+      [1, 0],
+      Extrapolate.CLAMP
+    );
+    const nudge = translateX.value * 0.08;
+    return {
+      opacity,
+      transform: [{ translateX: -40 + nudge }, { translateY: -40 }],
+    };
+  });
+
+  const swipeGesture = Gesture.Pan()
+    .activeOffsetX([-15, 15])
+    .failOffsetY([-15, 15])
+    .enabled(!isAnimating)
+    .onUpdate((event) => {
+      if (swipeLocked.value) return;
+      translateX.value = event.translationX;
+      translateY.value = event.translationY * 0.12;
+    })
+    .onEnd((event) => {
+      if (swipeLocked.value) return;
+      const absX = Math.abs(translateX.value);
+      const absVelocity = Math.abs(event.velocityX);
+      const shouldSwipe = absX > SWIPE_DISTANCE || absVelocity > SWIPE_VELOCITY;
+      if (shouldSwipe) {
+        swipeLocked.value = true;
+        runOnJS(setIsAnimating)(true);
+        const direction = translateX.value >= 0 ? 1 : -1;
+        const targetX = direction * (screenWidth + 80);
+        const houseId = currentHouseId.value;
+        if (!houseId) {
+          swipeLocked.value = false;
+          translateX.value = withSpring(0, { ...SWIPE_SPRING, velocity: event.velocityX });
+          translateY.value = withSpring(0, { ...SWIPE_SPRING, velocity: event.velocityY });
+          return;
+        }
+        translateX.value = withSpring(
+          targetX,
+          { ...SWIPE_SPRING, velocity: event.velocityX },
+          (finished) => {
+            if (finished) {
+              runOnJS(handleSwipeComplete)(direction > 0 ? 'right' : 'left', houseId);
+            }
+          }
+        );
+        translateY.value = withSpring(0, { ...SWIPE_SPRING, velocity: event.velocityY });
+      } else {
+        translateX.value = withSpring(0, { ...SWIPE_SPRING, velocity: event.velocityX });
+        translateY.value = withSpring(0, { ...SWIPE_SPRING, velocity: event.velocityY });
+      }
+    });
 
   const closePhotoViewer = (direction = 1) => {
     RNAnimated.parallel([
@@ -620,7 +1162,7 @@ export default function DeckScreen() {
             Dream Door
           </Text>
           <Image
-            source={require('../../assets/images/dream-door-house.png')}
+            source={require('./assets/images/dream-door-house.png')}
             style={styles.homeHeroImage}
             contentFit="contain"
           />
@@ -920,7 +1462,7 @@ export default function DeckScreen() {
                       homeTypes: filterHomeTypes,
                       beds: filterBeds,
                       baths: filterBaths,
-                      title: formatFilterTitle(filterMin, filterMax, filterHomeTypes, filterBeds, filterBaths, PRICE_MAX),
+                      title: formatFilterTitle(filterMin, filterMax, filterHomeTypes, filterBeds, filterBaths),
                     },
                   ]);
                 }
@@ -985,7 +1527,7 @@ export default function DeckScreen() {
                       homeTypes: filterHomeTypes,
                       beds: filterBeds,
                       baths: filterBaths,
-                      title: formatFilterTitle(filterMin, filterMax, filterHomeTypes, filterBeds, filterBaths, PRICE_MAX),
+                      title: formatFilterTitle(filterMin, filterMax, filterHomeTypes, filterBeds, filterBaths),
                     },
                   ]);
                   setShowFilterPrompt(false);
@@ -1019,11 +1561,9 @@ export default function DeckScreen() {
           </Pressable>
           <Text style={styles.sectionTitle}>{title}</Text>
           {list.length === 0 ? (
-            <EmptyState
-              message="no homes yet"
-              containerStyle={styles.savedEmpty}
-              styles={styles}
-            />
+            <View style={[styles.center, styles.savedEmpty]}>
+              <Text style={styles.endText}>no homes yet</Text>
+            </View>
           ) : (
             <ScrollView showsVerticalScrollIndicator={false}>
               {list.map(item => (
@@ -1085,11 +1625,9 @@ export default function DeckScreen() {
             </RNAnimated.View>
           )}
           {savedHouses.length === 0 ? (
-            <EmptyState
-              message="no saved houses yet"
-              containerStyle={styles.savedEmpty}
-              styles={styles}
-            />
+            <View style={[styles.center, styles.savedEmpty]}>
+              <Text style={styles.endText}>no saved houses yet</Text>
+            </View>
           ) : (
             <ScrollView showsVerticalScrollIndicator={false}>
               {savedHouses.map(item => (
@@ -1120,7 +1658,9 @@ export default function DeckScreen() {
                     style={styles.removeSavedButton}
                     onPress={() => {
                       if (isSaving) return;
-                      houseService.unsaveHouse(item.id).catch(() => {});
+                      fetch(`${API_BASE}/api/houses/${item.id}/unsave/`, {
+                        method: 'DELETE',
+                      }).catch(() => {});
                       setIsSaving(true);
                       runToastAnimation('Removed', () => {
                         setSavedIds(prev => {
@@ -1344,7 +1884,7 @@ export default function DeckScreen() {
           refreshControl={
             <RefreshControl
               refreshing={isRefreshingHouses}
-              onRefresh={refreshHouses}
+              onRefresh={() => loadHouses(true)}
             />
           }
         >
@@ -1459,16 +1999,106 @@ export default function DeckScreen() {
     };
   };
 
+  const renderHouseScrollContent = (house, meta, options = {}) => {
+    const isHouseSaved = savedIds.has(house.id);
+    const showActions = options.allowSave || options.showUndo;
+    const primaryPhotoUrl = getPrimaryPhotoUrl(house);
+    return (
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.cardScrollContent}
+      >
+        <Pressable
+          onPress={options.allowImagePress ? () => openPhotoViewer(house.id, 0) : undefined}
+        >
+          <Image
+            source={{ uri: primaryPhotoUrl || 'https://via.placeholder.com/600x400' }}
+            style={styles.image}
+            contentFit="cover"
+          />
+        </Pressable>
+
+        <View style={styles.cardBody}>
+          <Text style={styles.price}>
+            ${house.price ? house.price.toLocaleString() : '—'}
+          </Text>
+
+          <Text style={styles.address}>
+            {meta.detailAddress?.line || house.address_line}, {meta.detailAddress?.city || house.city},{' '}
+            {meta.detailAddress?.state_code || house.state}
+          </Text>
+
+          <Text style={styles.description}>
+            {meta.beds ?? '—'} bd · {meta.baths ?? '—'} ba · {meta.sqft ?? '—'} sqft
+            {meta.homeType ? ` · ${meta.homeType}` : ''}
+          </Text>
+
+          {showActions && (
+            <View style={styles.cardActions}>
+              {options.allowSave && (
+                <Text
+                  style={[
+                    styles.saveButton,
+                    isHouseSaved && styles.saved,
+                  ]}
+                  onPress={() => saveCurrentHouse()}
+                >
+                  {isHouseSaved ? 'Saved ✓' : 'Save'}
+                </Text>
+              )}
+              {options.showUndo && (
+                <Text
+                  style={[
+                    styles.undoButton,
+                    history.length === 0 && styles.undoDisabled,
+                  ]}
+                  onPress={undoSwipe}
+                >
+                  Undo
+                </Text>
+              )}
+            </View>
+          )}
+
+          <Text style={styles.detailHeader}>Description</Text>
+          <Text style={styles.detailBody}>
+            {meta.descriptionText || 'No description available.'}
+          </Text>
+
+          <Text style={styles.detailHeader}>Details</Text>
+          <Text style={styles.detailBody}>
+            {meta.beds ?? '—'} beds · {meta.baths ?? '—'} baths · {meta.yearBuilt ?? '—'} year built · {meta.sqft ?? '—'} sqft
+          </Text>
+
+          <Text style={styles.detailHeader}>Additional Details</Text>
+          {meta.detailItems.length === 0 ? (
+            <Text style={styles.detailBody}>No additional details available.</Text>
+          ) : (
+            meta.detailItems.map((item, itemIndex) => {
+              const lines = Array.isArray(item?.text) ? item.text : [item?.text].filter(Boolean);
+              return (
+                <View key={`${item?.category || 'detail'}-${itemIndex}`} style={styles.detailItem}>
+                  <Text style={styles.detailSubheader}>{item?.category || 'Details'}</Text>
+                  {lines.map((line, lineIndex) => (
+                    <Text key={`${itemIndex}-${lineIndex}`} style={styles.detailBody}>
+                      {line}
+                    </Text>
+                  ))}
+                </View>
+              );
+            })
+          )}
+        </View>
+      </ScrollView>
+    );
+  };
+
   const currentMeta = getHouseMeta(currentHouse);
   const nextMeta = nextHouse ? getHouseMeta(nextHouse) : null;
-  const currentPhotoUrl = currentHouse ? getPrimaryPhotoUrl(currentHouse) : null;
-  const nextPhotoUrl = nextHouse ? getPrimaryPhotoUrl(nextHouse) : null;
-  const canUndo = history.length > 0;
-  const isCurrentSaved = currentHouse ? savedIds.has(currentHouse.id) : false;
   const activeListTitle = activeFilterListId !== 'all'
     ? (filterLists.find((item) => item.id === activeFilterListId)?.title ||
-        formatFilterTitle(appliedFilterMin, appliedFilterMax, appliedFilterHomeTypes, appliedFilterBeds, appliedFilterBaths, PRICE_MAX))
-    : formatFilterTitle(appliedFilterMin, appliedFilterMax, appliedFilterHomeTypes, appliedFilterBeds, appliedFilterBaths, PRICE_MAX);
+        formatFilterTitle(appliedFilterMin, appliedFilterMax, appliedFilterHomeTypes, appliedFilterBeds, appliedFilterBaths))
+    : formatFilterTitle(appliedFilterMin, appliedFilterMax, appliedFilterHomeTypes, appliedFilterBeds, appliedFilterBaths);
 
   return (
     <GestureHandlerRootView style={styles.root}>
@@ -1503,34 +2133,72 @@ export default function DeckScreen() {
             </Pressable>
           </View>
         </View>
-        <SwipeDeck
-          currentHouse={currentHouse}
-          nextHouse={nextHouse}
-          currentMeta={currentMeta}
-          nextMeta={nextMeta}
-          currentPhotoUrl={currentPhotoUrl}
-          nextPhotoUrl={nextPhotoUrl}
-          onSwipeComplete={onSwipeComplete}
-          onSave={saveCurrentHouse}
-          onUndo={handleUndo}
-          onImagePress={() => {
-            if (currentHouse) {
-              openPhotoViewer(currentHouse.id, 0);
-            }
-          }}
-          isSaved={isCurrentSaved}
-          canUndo={canUndo}
-          toastMessage={toastMessage}
-          savedToastOpacity={savedToastOpacity}
-          savedToastTranslate={savedToastTranslate}
-          styles={styles}
-          screenWidth={screenWidth}
-          screenHeight={screenHeight}
-          isAnimating={isAnimating}
-          setIsAnimating={setIsAnimating}
-          testLikeEnabled={process.env.NODE_ENV === 'test'}
-          onTestLike={likeCurrentHouse}
-        />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.likeBadgeContainer,
+            {
+              left: screenWidth / 2,
+              top: screenHeight * 0.45,
+            },
+            likeBadgeAnimatedStyle,
+          ]}
+        >
+          <Text style={styles.likeBadge}>✓</Text>
+        </Animated.View>
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.dislikeBadgeContainer,
+            {
+              left: screenWidth / 2,
+              top: screenHeight * 0.45,
+            },
+            dislikeBadgeAnimatedStyle,
+          ]}
+        >
+          <Text style={styles.dislikeBadge}>✕</Text>
+        </Animated.View>
+        <View style={styles.cardStack}>
+          {nextHouse && nextMeta && (
+            <View style={[styles.card, styles.underCard]} pointerEvents="none">
+              {renderHouseScrollContent(nextHouse, nextMeta, { allowImagePress: false, allowSave: false })}
+            </View>
+          )}
+          {process.env.NODE_ENV === 'test' && (
+            <Pressable
+              testID="test-like"
+              onPress={likeCurrentHouse}
+              style={styles.testHiddenButton}
+            />
+          )}
+          <GestureDetector gesture={swipeGesture}>
+            <Animated.View
+              testID="swipe-card"
+              style={[styles.card, cardAnimatedStyle]}
+            >
+            {toastMessage && (
+              <RNAnimated.View
+                pointerEvents="none"
+                style={[
+                  styles.savedToast,
+                  {
+                    opacity: savedToastOpacity,
+                    transform: [{ translateY: savedToastTranslate }],
+                  },
+                ]}
+              >
+                <Text style={styles.savedToastText}>{toastMessage}</Text>
+              </RNAnimated.View>
+            )}
+            {renderHouseScrollContent(currentHouse, currentMeta, {
+              allowImagePress: true,
+              allowSave: true,
+              showUndo: true,
+            })}
+            </Animated.View>
+          </GestureDetector>
+        </View>
         <Modal
           visible={showPhotoViewer}
           transparent
